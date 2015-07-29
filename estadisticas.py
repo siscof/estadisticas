@@ -279,40 +279,40 @@ def benchXexp(directorioResultados, monton):
         evictionsL2 = pd.DataFrame(index=nombre_resumen, columns=['evictions_L2'])
         invalidations = pd.DataFrame(index=nombre_resumen, columns=['invalidations'])
         hitratio = pd.DataFrame(index=nombre_resumen, columns=['hit_ratio'])
-        memEventsLoad = pd.DataFrame(index=nombre_resumen, columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])  
-        gpuEventsLoad = pd.DataFrame(index=nombre_resumen, columns=['gpu_queue_load','gpu_lock_mshr_load','gpu_lock_dir_load','gpu_eviction_load','gpu_retry_load','gpu_miss_load','gpu_finish_load'])  
-        memEventsStore = pd.DataFrame(index=nombre_resumen, columns=['queue_nc_write','lock_mshr_nc_write','lock_dir_nc_write','eviction_nc_write','retry_nc_write','miss_nc_write','finish_nc_write'])  
+        memEventsLoad = pd.DataFrame(index=nombre_resumen, columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])
+        gpuEventsLoad = pd.DataFrame(index=nombre_resumen, columns=['gpu_queue_load','gpu_lock_mshr_load','gpu_lock_dir_load','gpu_eviction_load','gpu_retry_load','gpu_miss_load','gpu_finish_load'])
+        memEventsStore = pd.DataFrame(index=nombre_resumen, columns=['queue_nc_write','lock_mshr_nc_write','lock_dir_nc_write','eviction_nc_write','retry_nc_write','miss_nc_write','finish_nc_write'])
         df_dispatch = pd.DataFrame(index=nombre_resumen, columns=['cycles_simd_running','dispatch_stall_mem_access','dispatch_stall_barrier','dispatch_stall_instruction_infly','dispatch_stall_others'])
-        df_instructions_infly = pd.DataFrame(index=nombre_resumen, columns=['dispatch_branch_instruction_infly', 'dispatch_scalar_instruction_infly','dispatch_simd_instruction_infly', 'dispatch_lds_instruction_infly', 'dispatch_mem_scalar_instruction_infly', 'dispatch_v_mem_instruction_infly'])          
-        
+        df_instructions_infly = pd.DataFrame(index=nombre_resumen, columns=['dispatch_branch_instruction_infly', 'dispatch_scalar_instruction_infly','dispatch_simd_instruction_infly', 'dispatch_lds_instruction_infly', 'dispatch_mem_scalar_instruction_infly', 'dispatch_v_mem_instruction_infly'])
+
         for exp in nombre_resumen :
             try:
                 df_aux = monton[exp][bench]['con L1'].df
                 df_max = pd.DataFrame(monton[exp][bench]['con L1'].df.max(),columns=[exp]).transpose()
-                
+
                 lat_retry = df_aux[['cycles_load_action_retry','cycles_load_miss_retry','cycles_nc_store_writeback_retry','cycles_nc_store_action_retry','cycles_nc_store_miss_retry']].sum().sum() / df_aux['num_loads_mem'].sum()
 
                 latencia.ix[exp] = pd.DataFrame({'latencia_total':(df_aux['lat_loads_mem'].sum() / df_aux['num_loads_mem'].sum()) - lat_retry, 'latencia_retry':lat_retry},index=[exp]).ix[exp]
 
                 evictionsL2.ix[exp,'evictions_L2'] = df_aux['evictions_L2'].sum() / df_aux['num_loads_mem'].sum()
-                
+
                 memEventsLoad.ix[exp] = pd.DataFrame(df_aux[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_aux['access_load'].sum(0),columns=[exp]).transpose().ix[exp]
                 memEventsStore.ix[exp] = pd.DataFrame(df_aux[['queue_nc_write','lock_mshr_nc_write','lock_dir_nc_write','eviction_nc_write','retry_nc_write','miss_nc_write','finish_nc_write']].sum(0)/ df_aux['access_nc_write'].sum(0),columns=[exp]).transpose().ix[exp]
                 gpuEventsLoad.ix[exp] = pd.DataFrame(df_aux[['gpu_queue_load','gpu_lock_mshr_load','gpu_lock_dir_load','gpu_eviction_load','gpu_retry_load','gpu_miss_load','gpu_finish_load']].sum(0)/ df_aux['gpu_access_load'].sum(0),columns=[exp]).transpose().ix[exp]
-               
+
                 #analysis stall in dispatch
                 df_dispatch.ix[exp] = df_max.ix[exp,['cycles_simd_running','dispatch_stall_mem_access','dispatch_stall_barrier','dispatch_stall_instruction_infly','dispatch_stall_others']]
                 df_instructions_infly.ix[exp] = df_max.ix[exp,['dispatch_branch_instruction_infly', 'dispatch_scalar_instruction_infly','dispatch_simd_instruction_infly', 'dispatch_lds_instruction_infly', 'dispatch_mem_scalar_instruction_infly', 'dispatch_v_mem_instruction_infly']]
 
-                
-               
+
+
                 invalidations.ix[exp,'invalidations'] = df_aux['invalidations'].sum() / df_aux['num_loads_mem'].sum()
                 #pprint.pprint(contenedor_de_datos+'/'+exp+'_conL1/'+bench+'-mem-report')
                 fi = open(contenedor_de_datos+'/'+exp+'_conL1/'+bench+'-mem-report')
                 hitratio.ix[exp,'hit ratio'] =  buscar_y_acumular(fi,'[ l2-0 ]','[ l1-cu00 ]','HitRatio')
                 fi.close()
 
-                
+
 
             except IOError as e:
                 print('fallo en benchXexp para:')
@@ -327,11 +327,11 @@ def benchXexp(directorioResultados, monton):
         evictionsL2.plot(ax=t[0][1], kind='bar',stacked=True,title='evictions en L2')
 
         invalidations.plot(ax=t[1][0], kind='bar',stacked=True,title='invalidations')
-        hitratio.plot(ax=t[1][1], kind='bar',stacked=True,title='HitRatio')             
-        
+        hitratio.plot(ax=t[1][1], kind='bar',stacked=True,title='HitRatio')
+
 
         f.savefig(dir+bench+'.eps',format='eps', bbox_inches='tight')
-        
+
         f_mem, t_mem = plt.subplots(1,2)
         f_mem.set_size_inches(30, 20)
         f_mem.set_dpi(300)
@@ -341,61 +341,61 @@ def benchXexp(directorioResultados, monton):
         gpuEventsLoad.plot(ax=t_mem[1], kind='bar',stacked=True,title='gpuEventsLoad')
         #memEventsStore.plot(ax=t_mem[1], kind='bar',stacked=True,title='memEventsWrite')
         #.legend(loc='upper left', bbox_to_anchor=(0.6, 1.4))
-        
+
         t_mem[0].set_ylabel('Latencia (ciclos)')
         t_mem[1].set_ylabel('Latencia (ciclos)')
-        
+
         max_ylim = max([t_mem[0].get_ylim()[1],t_mem[1].get_ylim()[1]])
         t_mem[0].set_ylim([0,max_ylim])
-        t_mem[1].set_ylim([0,max_ylim]) 
+        t_mem[1].set_ylim([0,max_ylim])
         t_mem[0].set_ylabel("Latency Cycles")
-        
+
         f_mem.suptitle(bench, fontsize=25)
-        
+
         f_mem.savefig(dir+bench+'_memEvents.eps',format='eps', bbox_inches='tight')
-        
+
         fig_paper , tab_paper = plt.subplots()
         fig_paper.set_size_inches(30, 20)
         fig_paper.set_dpi(300)
         memEventsLoad.plot(ax=tab_paper, kind='bar',stacked=True,title="Latency variations")
         fig_paper.savefig(dir+bench+'_latpaper.eps',format='eps', bbox_inches='tight')
-        
+
         plt.close(fig_paper)
         plt.close(f_mem)
         t[0][0].cla()
         t[0][1].cla()
         t[1][0].cla()
         t[1][1].cla()
-            
+
         df_dispatch[['dispatch_stall_mem_access','dispatch_stall_barrier','dispatch_stall_instruction_infly','dispatch_stall_others']] = df_dispatch[['dispatch_stall_mem_access','dispatch_stall_barrier','dispatch_stall_instruction_infly','dispatch_stall_others']] / 10
         #df_dispatch = df_dispatch / 10
         df_dispatch = df_dispatch.div(df_dispatch.sum(1), axis=0)
         df_instructions_infly = df_instructions_infly.div(df_instructions_infly.sum(1), axis=0)
-        
+
         f_dispatch, t_dispatch = plt.subplots(1,2)
         f_dispatch.set_size_inches(30, 20)
         f_dispatch.set_dpi(300)
         #plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    
+
         df_dispatch.columns = ['cycles_simd_running','others_stalls','barrier_stall','memory_fence_stall','instruction_infly_stall']
         df_dispatch.plot(ax=t_dispatch[0], kind='bar',stacked=True,title='cicles idle').legend(loc='upper right', bbox_to_anchor=(0.5, 1.15))
         #f.savefig(dir + exp +'_dispatch_stall.eps',format='eps')
-    
+
         df_instructions_infly.plot(ax=t_dispatch[1], kind='bar',stacked=True,title='instructions in fly').legend(loc='upper left', bbox_to_anchor=(0.4, 1.20))
         t_dispatch[0].set_ylim(0,1)
         t_dispatch[1].set_ylim(0,1)
         f_dispatch.suptitle(bench +'_dispatch_stall', fontsize=25)
         f_dispatch.savefig(dir + bench +'_dispatch_stall.eps',format='eps', bbox_inches='tight')
-    
+
         plt.close(f_dispatch)
-        
+
     t[0][0].cla()
     t[0][1].cla()
     t[1][0].cla()
     t[1][1].cla()
     plt.close(f)
-    
-   
+
+
 
     return
 
@@ -422,17 +422,17 @@ def barras_opc(directorioResultados, monton):
                 #opc[exp][bench] = df_aux['total_global'].max() / float(df_aux['ciclos_totales'].max())
                 opc[exp][bench] = df_aux[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(df_aux['ciclos_intervalo'].sum())
                 print('bench = '+df_aux[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).to_string()+ ' ; '+ str(df_aux[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum())+' ; '+ str(df_aux['ciclos_intervalo'].sum()))
-               
+
                 ipc[exp][bench] = df_aux[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / float(df_aux['ciclos_intervalo'].sum())
                 invalidations[exp][bench] = df_aux['invalidations'].sum() / (df_aux['accesos_gpu'].sum() - df_aux['Coalesces_gpu'].sum() - df_aux['Coalesces_L1'].sum())
                 retries[exp][bench] = df_aux['accesses_with_retries'].sum() / (df_aux['accesos_gpu'].sum() - df_aux['Coalesces_gpu'].sum() - df_aux['Coalesces_L1'].sum())
                 latencia[exp][bench] = df_aux['lat_loads_mem'].sum() / df_aux['num_loads_mem'].sum()
 
-                
+
                 memEventsLoad = df_aux[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum()/ df_aux['access_load'].sum(0).sum()
                 memEventsStore = df_aux[['queue_nc_write','lock_mshr_nc_write','lock_dir_nc_write','eviction_nc_write','retry_nc_write','miss_nc_write','finish_nc_write']].sum(0).sum()/ df_aux['access_nc_write'].sum(0).sum()
                 gpuEventsLoad = df_aux[['gpu_queue_load','gpu_lock_mshr_load','gpu_lock_dir_load','gpu_eviction_load','gpu_retry_load','gpu_miss_load','gpu_finish_load']].sum(0).sum()/ df_aux['gpu_access_load'].sum(0).sum()
-                
+
                 latencia[exp][bench] = memEventsLoad + memEventsStore
 
             except Exception as e:
@@ -443,16 +443,16 @@ def barras_opc(directorioResultados, monton):
     latencia.plot(ax=t, kind='bar')
     f.savefig(dir + 'latencias.eps',format='eps')
     t.cla()
-    
+
     carpeta = '/nfs/gap/fracanma/benchmark/resultados/'
-    
+
     t.set_ylabel("OPC")
     t.set_xlabel("Benchmarks")
     opc.plot(ax=t, kind='bar')
     f.savefig(dir + 'opc.eps',format='eps', bbox_inches='tight')
     f.savefig(carpeta + 'opc.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     t.set_ylabel("IPC")
     t.set_xlabel("Benchmarks")
     ipc.plot(ax=t, kind='bar',rot=25, title='mshr performance')
@@ -465,13 +465,13 @@ def barras_opc(directorioResultados, monton):
     opc.ix[['BlackScholes','DCT','MersenneTwister','QuasiRandomSequence']].plot(ax=t, kind='bar',rot=25, title='mshr performance')
     f.savefig(carpeta + 'opc_altos.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     t.set_ylabel("OPC")
     t.set_xlabel("Benchmarks")
     opc.ix[['DwtHaar1D','FastWalshTransform','FloydWarshall','RecursiveGaussian','Reduction','ScanLargeArrays']].plot(ax=t, kind='bar',rot=25, title='mshr performance')
     f.savefig(carpeta + 'opc_bajos.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     t.set_ylabel("IPC")
     t.set_xlabel("Benchmarks")
     ipc.ix[['DwtHaar1D','FastWalshTransform','FloydWarshall','RecursiveGaussian','Reduction','ScanLargeArrays']].plot(ax=t, kind='bar',rot=25, title='IPC')
@@ -648,16 +648,16 @@ def analisis_stall(directorioResultados, monton):
     plt.close(f)
 
     return'''
-    
+
 def plot_axis(ax, df, legend, title, xlabel, ylabel):
-    
+
     df.plot(ax=ax,legend=legend,title=title)
-    
+
     ax.set_ylabel(ylabel)
     ax.set_ylim(bottom = 0)
     ax.set_xlabel(xlabel)
     return
-    
+
 def OPCmultitest():
     return
 
@@ -707,7 +707,7 @@ def IPCmultitest(directorioResultados, monton):
 
                     if exp in nombre_resumen[0:]:
                         pd.DataFrame({exp:df_cumsum['total_intervalo']/df_cumsum['ciclos_intervalo']}).plot(ax=t[1][2],legend=False)
-                        pd.DataFrame({exp:df2['mshr_size_L1']/(tamanyoGrupo/10000)}).plot(ax=t[0][2],legend=False)
+                        pd.DataFrame({exp:df2['mshr_size_L1']}).plot(ax=t[0][2],legend=False)
                         pd.DataFrame({exp:df2['lat_loads_gpu']/ df2['num_loads_gpu']}).plot(ax=t[0][1],legend=False)
                         pd.DataFrame({exp:df2['total_intervalo']/ df2['ciclos_intervalo']}).plot(ax=t[0][0])
                         if 'simd_idle1' in df2.columns:
@@ -1344,8 +1344,8 @@ def loadworker(bench,sufijo, TESTS, contenedor_de_datos):
             simend = buscar_string(f, 'SimEnd')
             f.close()
             if 'ContextsFinished' == simend :
-                df = pd.read_csv(archivo,sep = ' ', header = 0) 
-                
+                df = pd.read_csv(archivo,sep = ' ', header = 0)
+
                 #tamanyoGrupo = np.ceil(df.shape[0]/100)
                 #df = df.groupby( lambda x :  (x // tamanyoGrupo) * tamanyoGrupo).sum()
 
@@ -1704,7 +1704,7 @@ def mshr():
 
 
     BENCHMARKS =['BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RecursiveGaussian','Reduction','ScanLargeArrays']
- 
+
 
     directorio_salida = contenedor_de_datos+'/'+'graficos mshr'
     DIR_GRAFICOS = directorio_salida
@@ -1741,18 +1741,18 @@ def mshr():
     for r in pool_result:
         aux = r.get()
         resultados_temp.append( dict(zip(BENCHMARKS,aux)))
-        
+
     dict_por_instrucciones = dict(zip(nombre_resumen, resultados_temp ))
-        
+
     print('SE CARGARON TODOS LOS DATOS!!!')
     print('TIEMPO LEYENDO DATOS : ',time.time() - start)
-    
-     
-     
+
+
+
     print('TIEMPO DE EXECUCION : ',time.time() - start)
 
     return
-    
+
 def no_blocking():
     return
 
@@ -1761,7 +1761,7 @@ def grayify_cmap(cmap):
     cmap = plt.cm.get_cmap(cmap)
     colors_i = np.linspace(0, 1., 100)
     colors=cmap(colors_i)
-    
+
     # convert RGBA to perceived greyscale luminance
     # cf. http://alienryderflex.com/hsp.html
     RGB_weight = [0.299, 0.587, 0.114]
@@ -1773,7 +1773,7 @@ def grayify_cmap(cmap):
         rgb[n,:,1]=luminance
         rgb[n,:,2]=luminance
     k=['red', 'green', 'blue']
-    data=dict(zip(k,rgb)) 
+    data=dict(zip(k,rgb))
     my_cmap = mpl.colors.LinearSegmentedColormap("grayify",data)
     return my_cmap
 
@@ -1791,10 +1791,10 @@ def grafica_ipc_opc(monton):
     ipc = pd.DataFrame(index=BENCHMARKS , columns=['vector inst', 'scalar inst'])
     exec_time = pd.DataFrame(index=BENCHMARKS , columns=['mshr_disable'])
     df_instructions = pd.DataFrame(index=BENCHMARKS,columns = ['i_scalar','mi_simd','i_branch','mi_lds','i_s_mem','mi_v_mem'])
-       
-    
+
+
     speedup= pd.DataFrame(index=['IPC','OPC'])
-    
+
 
     for bench in BENCHMARKS :
 
@@ -1802,103 +1802,103 @@ def grafica_ipc_opc(monton):
         try:
             #df_aux = monton[bench][bench]['con L1'].df
             '''opc[exp][bench] = df_aux[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(df_aux['ciclos_intervalo'].sum())
-          
+
             ipc[exp][bench] = df_aux[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / float(df_aux['ciclos_intervalo'].sum())
             invalidations[exp][bench] = df_aux['invalidations'].sum() / (df_aux['accesos_gpu'].sum() - df_aux['Coalesces_gpu'].sum() - df_aux['Coalesces_L1'].sum())
             retries[exp][bench] = df_aux['accesses_with_retries'].sum() / (df_aux['accesos_gpu'].sum() - df_aux['Coalesces_gpu'].sum() - df_aux['Coalesces_L1'].sum())
             latencia[exp][bench] = df_aux['lat_loads_mem'].sum() / df_aux['num_loads_mem'].sum()
-    
-            
+
+
             memEventsLoad = df_aux[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum()/ df_aux['access_load'].sum(0).sum()
             memEventsStore = df_aux[['queue_nc_write','lock_mshr_nc_write','lock_dir_nc_write','eviction_nc_write','retry_nc_write','miss_nc_write','finish_nc_write']].sum(0).sum()/ df_aux['access_nc_write'].sum(0).sum()
             gpuEventsLoad = df_aux[['gpu_queue_load','gpu_lock_mshr_load','gpu_lock_dir_load','gpu_eviction_load','gpu_retry_load','gpu_miss_load','gpu_finish_load']].sum(0).sum()/ df_aux['gpu_access_load'].sum(0).sum()
-            
+
             latencia[exp][bench] = memEventsLoad + memEventsStore
     '''
 
             baseline = monton['mshr_disable'][bench]['con L1'].df
-            
+
             #variacion = monton['4 mshr entries'][bench]['con L1'].df
-    
+
             #opc['execution time'][bench] = variacion['ciclos_intervalo'].sum() / float(baseline['ciclos_intervalo'].sum())
             #opc['opc'][bench] = (variacion[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(variacion['ciclos_intervalo'].sum())) / (baseline[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / baseline['ciclos_intervalo'].sum())
             #opc['ipc'][bench] = (variacion[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / float(variacion['ciclos_intervalo'].sum())) / (baseline[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / baseline['ciclos_intervalo'].sum())
-    
+
             #print('variacion opc = '+str(variacion[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(variacion['ciclos_intervalo'].sum())))
             #print('baseline opc = '+str(baseline[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / baseline['ciclos_intervalo'].sum()))
-           
+
             #print('variacion ipc = '+str(variacion[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / float(variacion['ciclos_intervalo'].sum())))
             #print('baseline ipc = '+str(baseline[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / baseline['ciclos_intervalo'].sum()))
-           
+
             #exec_time['mshr_disable'][bench] = baseline['ciclos_intervalo'].sum()
-            #exec_time['4 mshr entries'][bench] = variacion['ciclos_intervalo'].sum() 
-            
+            #exec_time['4 mshr entries'][bench] = variacion['ciclos_intervalo'].sum()
+
             opc['vector inst'][bench] = baseline[['i_simd','i_v_mem','i_lds']].sum(0).sum() / float(baseline['ciclos_intervalo'].sum())
             opc['scalar inst'][bench] = baseline[['i_scalar','i_s_mem','i_branch']].sum(0).sum() / float(baseline['ciclos_intervalo'].sum())
-        
+
             ipc['vector inst'][bench] = baseline[['mi_simd','mi_v_mem','mi_lds']].sum(0).sum() / float(baseline['ciclos_intervalo'].sum())
             ipc['scalar inst'][bench] = baseline[['i_scalar','i_s_mem','i_branch']].sum(0).sum() / float(baseline['ciclos_intervalo'].sum())
-        
+
             #ipc['mshr_disable'][bench] = baseline[['i_scalar','mi_simd','i_s_mem','mi_v_mem','i_branch','mi_lds']].sum(0).sum() / float(baseline['ciclos_intervalo'].sum())
-            
+
             opi['mshr_disable'][bench] = baseline[['i_simd','i_v_mem','i_lds']].sum(0).sum() / baseline[['mi_simd','mi_v_mem','mi_lds']].sum(0).sum()
-     
+
             df_sum = pd.DataFrame(baseline.sum(),columns=[bench]).transpose()
             df_instructions.ix[bench] = df_sum.ix[bench,['i_scalar', 'mi_simd', 'i_s_mem', 'mi_v_mem', 'i_branch', 'mi_lds',]]
-       
 
-           
+
+
         except Exception as e:
             print('Fallo grafica_ipc_opc(): '+bench)
             print(e)
-    
+
     #opc.plot(ax=t, kind='bar',rot=25, title='mshr performance')
     df_instructions = df_instructions.div(df_instructions.sum(1), axis=0)
     df_instructions.plot(ax=t,rot=90, kind='bar',stacked=True)
     t.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    t.set_xticklabels(ticks)  
+    t.set_xticklabels(ticks)
     t.set_ylabel('Instructions type distribution')
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=3, mode="expand", borderaxespad=0.)
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'porcentage_de_inst.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
-    
-    
-    opc.plot(ax=t, kind='bar',stacked=True, rot=90)  
-    t.set_xticklabels(ticks)  
+
+
+
+    opc.plot(ax=t, kind='bar',stacked=True, rot=90)
+    t.set_xticklabels(ticks)
     t.set_ylabel('OPC')
-    #t.set_xticks([]) 
-    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.) 
+    #t.set_xticks([])
+    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'opc.eps',format='eps', bbox_inches='tight')
     t.cla()
     #t[0].set_xlabel('OPC')
     opi.plot(ax=t, kind='bar', rot=90,legend=False)
     t.set_ylabel('OPI')
-    t.set_xticklabels(ticks) 
-    #t.set_xticks([]) 
+    t.set_xticklabels(ticks)
+    #t.set_xticks([])
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'opi.eps',format='eps', bbox_inches='tight')
     t.cla()
     #t[0].set_xlabel('OPI')
     ipc.plot(ax=t, kind='bar',stacked=True , rot=90)
     t.set_ylabel('IPC')
-    t.set_xticklabels(ticks) 
-    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.) 
-    
+    t.set_xticklabels(ticks)
+    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0.)
+
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'ipc.eps',format='eps', bbox_inches='tight')
     #t[0].set_xlabel('IPC')
     t.cla()
     plt.close(f)
-    
-    graficas_coalesce(monton)
-    
 
-    
+    graficas_coalesce(monton)
+
+
+
 def graficas_no_blocking_store(monton):
-    
+
     f, t = plt.subplots()
     f.set_size_inches(15, 10)
     f.set_dpi(300)
-    
+
     vmb_blocking_time = pd.DataFrame(index=BENCHMARKS , columns=['NBS disable','NBS enable']) #,'store NBS disable'])
     opc = pd.DataFrame(index=BENCHMARKS , columns=['NBS disable','NBS enable'])
     #vmb_inst_rate = pd.DataFrame(index=BENCHMARKS , columns=['blocking_access_NBS_disable','blocking_store_NBS_disable'])
@@ -1907,37 +1907,37 @@ def graficas_no_blocking_store(monton):
             #vmb
             coalesce_gpu_enable = monton['no_blocking_store_enable'][bench]['con L1'].df
             coalesce_gpu_disable = monton['coalesce_gpu_disable'][bench]['con L1'].df
-            
+
             CU_used = 10
             blocking_store_enable = 0
             blocking_store_disable = 0
             blocking_enable = 0
-            blocking_disable = 0 
+            blocking_disable = 0
             for i in [0,1,2,3,4,5,6,7,8,9] :
-                
+
                 #print('CU '+str(i)+' = '+str(coalesce_gpu_enable['vmb_blocked_store_CU'+str(i)].sum()))
-                
+
                 #if coalesce_gpu_disable['vmb_blocked_store_CU'+str(i)].sum() == 0 :
                 #    CU_used = i
                 #    break
-                
+
                 blocking_store_enable +=  coalesce_gpu_enable['vmb_blocked_store_CU'+str(i)].sum()
                 blocking_enable +=  coalesce_gpu_enable['vmb_blocked_store_CU'+str(i)].sum() + coalesce_gpu_enable['vmb_blocked_load_CU'+str(i)].sum()
                 blocking_disable +=  coalesce_gpu_disable['vmb_blocked_store_CU'+str(i)].sum() + coalesce_gpu_disable['vmb_blocked_load_CU'+str(i)].sum()
                 # + coalesce_gpu_enable['vmb_blocked_load_CU'+str(i)].sum()
                 blocking_store_disable +=  coalesce_gpu_disable['vmb_blocked_store_CU'+str(i)].sum()
                 # + coalesce_gpu_disable['vmb_blocked_load_CU'+str(i)].sum()
-        
-            
+
+
             #vmb_blocking_time['no_blocking_store_enable'][bench] = ((blocking_store_enable / CU_used) / coalesce_gpu_enable['ciclos_intervalo'].sum()) * 100
-            
+
             #vmb_blocking_time['store NBS disable'][bench] = ((blocking_store_disable / CU_used) / coalesce_gpu_disable['ciclos_intervalo'].sum()) * 100
             #vmb_blocking_time['store NBS disable'][bench] = ((blocking_store_disable / 10) / coalesce_gpu_disable['ciclos_intervalo'].sum()) * 100
-            
+
             vmb_blocking_time['NBS enable'][bench] = ((blocking_enable / 10) / coalesce_gpu_disable['ciclos_intervalo'].sum()) * 100
-            
+
             vmb_blocking_time['NBS disable'][bench] = ((blocking_disable / 10) / coalesce_gpu_disable['ciclos_intervalo'].sum()) * 100
-            
+
             opc['NBS disable'][bench] = coalesce_gpu_disable[['i_simd','i_v_mem','i_lds','i_scalar','i_s_mem','i_branch']].sum(0).sum() / float(coalesce_gpu_disable['ciclos_intervalo'].sum())
             opc['NBS enable'][bench] = coalesce_gpu_enable[['i_simd','i_v_mem','i_lds','i_scalar','i_s_mem','i_branch']].sum(0).sum() / float(coalesce_gpu_enable['ciclos_intervalo'].sum())
             #vmb_inst_rate.ix[bench]['no_blocking_store_enable'] = coalesce_gpu_enable['vmb_inst_counter']
@@ -1950,109 +1950,109 @@ def graficas_no_blocking_store(monton):
             f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + bench + 'inst_rate.eps', format='eps', bbox_inches='tight')
             t.cla()
 
-                    
+
         except Exception as e:
             print('Fallo graficas_no_blocking_store(): '+bench)
-            print(e)   
+            print(e)
 
     #vmb_blocking_time.columns = ['no blocking store enable','no blocking store disable']
     vmb_blocking_time.plot(ax=t, kind='bar', rot=75)
     t.set_ylabel('% Time VMB blocked')
-    t.set_xticklabels(ticks)  
-    t.set_yticklabels(['0%','10%','20%','30%','40%','50%','60%','70%','80%','90%']) 
+    t.set_xticklabels(ticks)
+    t.set_yticklabels(['0%','10%','20%','30%','40%','50%','60%','70%','80%','90%'])
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'vmb.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     opc.plot(ax=t, kind='bar', rot=75)
     t.set_ylabel('OPC')
     t.set_xticklabels(ticks)
     t.legend(loc='upper center', bbox_to_anchor=(0.4, 1))
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'vmb_opc.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     (opc['NBS enable']/opc['NBS disable']).plot(ax=t, kind='bar', rot=75, legend=False)
     t.set_ylabel('Speedup')
     t.set_xticklabels(ticks)
     t.set_ylim(bottom = 1)
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'vmb_opc_speedup.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     vmb_blocking_time.ix[['FastWalshTransform','MatrixMultiplication','MatrixTranspose','MersenneTwister']].plot(ax=t, kind='bar',rot=45, title='Cycles VMB is blocked')
     t.set_ylabel('Average time VMB was blocked by store(% over total cycles)')
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'vmb_altos.eps',format='eps', bbox_inches='tight')
-    t.cla()   
-    
+    t.cla()
+
     vmb_blocking_time.ix[['BlackScholes','DCT','DwtHaar1D','FloydWarshall','QuasiRandomSequence','RecursiveGaussian','Reduction','ScanLargeArrays']].plot(ax=t, kind='bar',rot=65, title='Cycles VMB is blocked')
     t.set_ylabel('Average time VMB was blocked by store(% over total cycles)')
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'vmb_bajos.eps',format='eps', bbox_inches='tight')
     t.cla()
- 
+
     t.cla()
     plt.close(f)
 
 def graficas_coalesce(monton):
-    
+
     f, t = plt.subplots()
     f.set_size_inches(15, 10)
     f.set_dpi(300)
 
-    latency = pd.DataFrame(index=nombre_resumen, columns=['memory system latency','GPU latency'])  
+    latency = pd.DataFrame(index=nombre_resumen, columns=['memory system latency','GPU latency'])
     opc = pd.DataFrame(index=benchmarks_amd, columns=nombre_resumen)
-    coalesce = pd.DataFrame(index=benchmarks_amd, columns=['coalesce']) 
+    coalesce = pd.DataFrame(index=benchmarks_amd, columns=['coalesce'])
     opc_coalesce = pd.DataFrame(index=benchmarks_amd, columns=['speedup'])
-                
-   
+
+
     for bench in BENCHMARKS :
-        try:    
+        try:
             for exp in nombre_resumen :
-        
+
                 df_aux = monton[exp][bench]['con L1'].df
                 latency.ix[exp]['memory system latency'] = df_aux['lat_loads_mem'].sum(0)/ df_aux['num_loads_mem'].sum(0)
                 latency.ix[exp]['GPU latency'] = df_aux['lat_loads_gpu'].sum(0)/ df_aux['num_loads_gpu'].sum(0)
- 
+
                 '''
                 opc_coalesce_enable = monton['coalesce_gpu_enable'][bench]['con L1'].df[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(monton['coalesce_gpu_enable'][bench]['con L1'].df['ciclos_intervalo'].sum())
                 opc_coalesce_disable = monton['coalesce_gpu_disable'][bench]['con L1'].df[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(monton['coalesce_gpu_disable'][bench]['con L1'].df['ciclos_intervalo'].sum())
                 opc_coalesce.ix[bench]['speedup'] =  opc_coalesce_enable / opc_coalesce_disable
-                '''               
- 
-                
+                '''
+
+
                 opc[exp][bench] = df_aux[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(df_aux['ciclos_intervalo'].sum())
-    
-    
-            coalesce.ix[bench]['coalesce'] = (monton['coalesce_gpu_enable'][bench]['con L1'].df['Coalesces_gpu'].sum(0) / monton['coalesce_gpu_disable'][bench]['con L1'].df['Coalesces_L1'].sum(0))-1    
+
+
+            coalesce.ix[bench]['coalesce'] = (monton['coalesce_gpu_enable'][bench]['con L1'].df['Coalesces_gpu'].sum(0) / monton['coalesce_gpu_disable'][bench]['con L1'].df['Coalesces_L1'].sum(0))-1
             opc_coalesce_enable = monton['coalesce_gpu_enable'][bench]['con L1'].df[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(monton['coalesce_gpu_enable'][bench]['con L1'].df['ciclos_intervalo'].sum())
-            opc_coalesce_disable = monton['coalesce_gpu_disable'][bench]['con L1'].df[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(monton['coalesce_gpu_disable'][bench]['con L1'].df['ciclos_intervalo'].sum()) 
+            opc_coalesce_disable = monton['coalesce_gpu_disable'][bench]['con L1'].df[['i_scalar','i_simd','i_s_mem','i_v_mem','i_branch','i_lds']].sum(0).sum() / float(monton['coalesce_gpu_disable'][bench]['con L1'].df['ciclos_intervalo'].sum())
             opc_coalesce.ix[bench]['speedup'] =  ((opc_coalesce_enable / opc_coalesce_disable) - 1)*100
-            
-        except Exception as e:   
+
+        except Exception as e:
             print('Fallo graficas_coalesce(): '+bench)
-            print(e)  
-              
-    
+            print(e)
+
+
         latency.plot(ax=t, kind='bar',rot=25)
         t.set_ylabel('Latency (cycles)')
         t.set_xticklabels(['4-MSHR','8-MSHR','16-MSHR','NO-MSHR'])
         f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' +bench+ ' latency.eps',format='eps', bbox_inches='tight')
         t.cla()
-    
+
     '''
-    opc.columns = ['4-MSHR','8-MSHR','16-MSHR','NO-MSHR']  
+    opc.columns = ['4-MSHR','8-MSHR','16-MSHR','NO-MSHR']
     t.set_ylabel("OPC")
     opc.plot(ax=t, kind='bar',)
-    t.set_xticklabels(ticks) 
+    t.set_xticklabels(ticks)
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'opc_mshr.eps',format='eps', bbox_inches='tight')
     t.cla()
-        
+
     t.set_ylabel("OPC")
-   
+
     opc.ix[['BlackScholes','DCT','MersenneTwister','QuasiRandomSequence']].plot(ax=t, kind='bar',rot=25)
     t.legend(loc='upper center', bbox_to_anchor=(0.4, 1))
     t.set_xticklabels(['BlackS','DCT','Mersenne','QuasiRand'])
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'opc_mshr_altos.eps',format='eps', bbox_inches='tight')
     t.cla()
-     
-   
+
+
     t.set_ylabel("OPC")
     opc.ix[['DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixTranspose','RecursiveGaussian','Reduction','ScanLargeArrays']].plot(ax=t, kind='bar',rot=45)
     t.legend(loc='upper center', bbox_to_anchor=(0.6, 1))
@@ -2060,32 +2060,32 @@ def graficas_coalesce(monton):
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'opc_mshr_bajos.eps',format='eps', bbox_inches='tight')
     t.cla()
     '''
-    
+
     coalesce.plot(ax=t, kind='bar',rot=75, legend=False)
     t.set_ylabel("Relative # coalesced accesses")
     t.set_xticklabels(ticks)
-    t.set_yticklabels(['-10%','0%','10%','20%','30%','40%','50%','60%','70%','80%']) 
+    t.set_yticklabels(['-10%','0%','10%','20%','30%','40%','50%','60%','70%','80%'])
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'coalesces.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
+
     opc_coalesce.plot(ax=t, kind='bar',rot=75, legend=False)
     t.set_ylabel("Relative OPC")
     t.set_xticklabels(ticks)
     t.set_yticklabels(['-50%','0%','50%','100%','150%','200%','250%'])
     f.savefig('/nfs/gap/fracanma/benchmark/resultados/graficos/' + 'opc_coalesces.eps',format='eps', bbox_inches='tight')
     t.cla()
-    
-    
-    
+
+
+
     plt.close(f)
-        
-        
+
+
     return
 
-    
+
 if __name__ == '__main__':
     # Create the queue and thread pool.
-    
+
     start = time.time()
 
 
@@ -2101,7 +2101,7 @@ if __name__ == '__main__':
     sb.set_palette(cmap, n_colors=2)
     mpl.rcParams.update({'font.size': 16})'''
 
-     
+
 
     '''
     tipos_instrucciones = np.dtype([('mshr L1',np.int64),('mshr L2',np.int64),('entradas bloqueadas L1',np.int64),('entradas bloqueadas L2',np.int64),('Coalesces L1',np.int64),('Coalesces L2',np.int64),('accesos L1',np.int64),('accesos L2',np.int64),('efectivos L1',np.int64),('efectivos L2',np.int64),('misses L1',np.int64),('misses L2',np.int64),('hits L1',np.int64),('hits L2',np.int64),('Cmisses L1',np.int64),('Cmisses L2',np.int64),('Chits L1',np.int64),('Chits L2',np.int64),('lat L1-L2',np.int64),('paquetes L1-L2',np.int64),('lat L2-MM',np.int64),('paquetes L2-MM',np.int64),('lat loads gpu',np.int64),('num loads gpu',np.int64),('lat loads mem',np.int64),('num loads mem',np.int64),('i_scalar',np.int64),('i_simd',np.int64),('mi_simd',np.int64),('i_s_mem',np.int64),('i_v_mem',np.int64),('mi_v_mem',np.int64),('i_branch',np.int64),('i_lds',np.int64),('mi_lds',np.int64),('total intervalo',np.int64),('total global',np.int64),('ciclos intervalo',np.int64),('ciclos totales',np.int64)])
@@ -2111,56 +2111,57 @@ if __name__ == '__main__':
 
     # tipos_instrucciones = np.dtype([('access_list_count',np.int64),('mshr L1',np.int64),('mshr L2',np.int64),('entradas bloqueadas L1',np.int64),('entradas bloqueadas L2',np.int64),('Coalesces gpu',np.int64),('Coalesces L1',np.int64),('Coalesces L2',np.int64),('accesos gpu',np.int64),('accesos L1',np.int64),('accesos L2',np.int64),('efectivos L1',np.int64),('efectivos L2',np.int64),('misses L1',np.int64),('misses L2',np.int64),('hits L1',np.int64),('hits L2',np.int64),('Cmisses L1',np.int64),('Cmisses L2',np.int64),('Chits L1',np.int64),('Chits L2',np.int64),('lat L1-L2',np.int64),('paquetes L1-L2',np.int64),('lat L2-MM',np.int64),('paquetes L2-MM',np.int64),('lat loads gpu',np.int64),('num loads gpu',np.int64),('lat loads mem',np.int64),('num loads mem',np.int64),('i_scalar',np.int64),('i_simd',np.int64),('mi_simd',np.int64),('i_s_mem',np.int64),('i_v_mem',np.int64),('mi_v_mem',np.int64),('i_branch',np.int64),('i_lds',np.int64),('mi_lds',np.int64),('total intervalo',np.int64),('total global',np.int64),('ciclos intervalo',np.int64),('ciclos totales',np.int64)])
 
-   
+
     #nombre_resumen = ['04-16_mshr32_solo_no_blocking_store_10CU','no_blocking_write_mshr_disabled']
     #nombre_resumen = ['04-16_mshr32_solo_coalesce_gpu_10CU','04-16_mshr32_coalesce_gpu_mixto_10CU','coalesce_mshr_disabled']
     nombre_resumen = ['07-03_nmoesi_mshr16_test_statistics2','07-03_nmoesi_mshr32_test_statistics2','07-03_nmoesi_mshr256_test_statistics2']
+    nombre_resumen = ['07-29_nmoesi_mshr16_test','07-29_nmoesi_mshr32_test','07-29_nmoesi_mshr256_test']
     #,'06-22_nmoesi_mshr16_mshr_estatico_recursosextra','06-22_nmoesi_mshr32_mshr_estatico_recursosextra','06-22_nmoesi_mshr256_mshr_estatico_recursosextra']
-    
+
     # variables de los test
-    
+
     #coalesce
     #nombre_resumen = ['coalesce_gpu_enable','coalesce_gpu_disable']
-    
+
     #no_blocking
-    #nombre_resumen = ['no_blocking_store_enable','coalesce_gpu_disable'] 
-    
+    #nombre_resumen = ['no_blocking_store_enable','coalesce_gpu_disable']
+
     #mshr
     #nombre_resumen = ['4 mshr entries','8 mshr entries','16 mshr entries','mshr_disable']
-    
-    
-    
+
+
+
     #nombre_resumen = ['04-15_mshr4_cc','04-15_mshr8_cc','04-15_mshr16_cc','04-15_mshr32_cc','04-15_mshr4_no_blocking_store_enable','04-15_mshr8_no_blocking_store_enable','04-15_mshr16_no_blocking_store_enable','04-15_mshr32_no_blocking_store_enable','04-15_mshr4_coalesce_gpu_enable','04-15_mshr8_coalesce_gpu_enable','04-15_mshr16_coalesce_gpu_enable','04-15_mshr32_coalesce_gpu_enable']
-    
-    
+
+
     # no_blocking_write
     #nombre_resumen = ['04-15_mshr4_no_blocking_store_enable_5CU','04-15_mshr8_no_blocking_store_enable_5CU','04-15_mshr16_no_blocking_store_enable_5CU','04-15_mshr32_no_blocking_store_enable_5CU','04-15_mshr4_coalesce_gpu_enable_5CU','04-15_mshr8_coalesce_gpu_enable_5CU','04-15_mshr16_coalesce_gpu_enable_5CU','04-15_mshr32_coalesce_gpu_enable_5CU']
-    
+
     # coalesce_gpu
     #nombre_resumen = ['04-15_mshr4_coalesce_gpu_enable_5CU','04-15_mshr8_coalesce_gpu_enable_5CU','04-15_mshr16_coalesce_gpu_enable_5CU','04-15_mshr32_coalesce_gpu_enable_5CU','04-15_mshr4_mshr_enable_5CU','04-15_mshr8_mshr_enable_5CU','04-15_mshr16_mshr_enable_5CU','04-15_mshr32_mshr_enable_5CU']
-    
+
     # mshr
     #nombre_resumen = ['04-15_mshr4_mshr_enable_5CU','04-15_mshr8_mshr_enable_5CU','04-15_mshr16_mshr_enable_5CU','04-15_mshr32_mshr_enable_5CU','04-15_mshr16_mshr_disable_5CU']
 
     # no_blocking_write
     #nombre_resumen = ['04-15_mshr4_no_blocking_store_enable','04-15_mshr8_no_blocking_store_enable','04-15_mshr16_no_blocking_store_enable','04-15_mshr32_no_blocking_store_enable','04-15_mshr4_coalesce_gpu_enable','04-15_mshr8_coalesce_gpu_enable','04-15_mshr16_coalesce_gpu_enable','04-15_mshr32_coalesce_gpu_enable']
-    
+
     # coalesce_gpu
     #nombre_resumen = ['04-15_mshr4_coalesce_gpu_enable','04-15_mshr8_coalesce_gpu_enable','04-15_mshr16_coalesce_gpu_enable','04-15_mshr32_coalesce_gpu_enable','04-15_mshr4_mshr_enable','04-15_mshr8_mshr_enable','04-15_mshr16_mshr_enable','04-15_mshr32_mshr_enable']
-    
 
-    
+
+
     #nombre_resumen = ['04-13_mshr4_con_mshr','04-13_mshr8_con_mshr','04-13_mshr16_con_mshr','04-13_mshr32_con_mshr','04-13_mshr4_sin_mshr','04-13_mshr8_sin_mshr','04-13_mshr16_sin_mshr','04-13_mshr32_sin_mshr']
-    
+
     #nombre_resumen = ['04-07_mshr4_witness','04-07_mshr8_witness','04-07_mshr16_witness','04-07_mshr32_witness','03-27_mshr64_m2s_sin_mod']
     #nombre_resumen = ['03-27_mshr4_m2s_sin_mod','03-27_mshr8_m2s_sin_mod','03-27_mshr16_m2s_sin_mod','03-27_mshr32_m2s_sin_mod','03-27_mshr64_m2s_sin_mod','03-27_mshr128_m2s_sin_mod','03-27_mshr256_m2s_sin_mod','04-01_mshr4_m2s_mshr2','04-01_mshr8_m2s_mshr2','04-01_mshr16_m2s_mshr2','04-01_mshr32_m2s_mshr2','04-01_mshr64_m2s_mshr2','04-01_mshr128_m2s_mshr2','04-01_mshr256_m2s_mshr2','04-01_mshr4_m2s_witness','04-01_mshr8_m2s_witness','04-01_mshr16_m2s_witness','04-01_mshr32_m2s_witness']
-    
+
     #nombre_resumen = ['02-23_mshr4','02-23_mshr8','02-23_mshr16','02-23_mshr32','02-23_mshr64','02-23_mshr128','02-23_mshr256','03-23_mshr4_base1_cc','03-23_mshr8_base1_cc','03-23_mshr16_base1_cc','03-23_mshr32_base1_cc','03-23_mshr64_base1_cc','03-23_mshr128_base1_cc','03-23_mshr256_base1_cc','03-24_mshr4_cc_test','03-24_mshr8_cc_test','03-24_mshr16_cc_test','03-24_mshr32_cc_test','03-24_mshr64_cc_test','03-24_mshr128_cc_test','03-24_mshr256_cc_test','03-27_mshr4_m2s_sin_mod','03-27_mshr8_m2s_sin_mod','03-27_mshr16_m2s_sin_mod','03-27_mshr32_m2s_sin_mod','03-27_mshr64_m2s_sin_mod','03-27_mshr128_m2s_sin_mod','03-27_mshr256_m2s_sin_mod']
-    
+
     #nombre_resumen = ['02-23_mshr4','02-23_mshr8','02-23_mshr16','02-23_mshr32','02-23_mshr64','02-23_mshr128','02-23_mshr256','03-24_mshr4_cc_test','03-24_mshr8_cc_test','03-24_mshr16_cc_test','03-24_mshr32_cc_test','03-24_mshr64_cc_test','03-24_mshr128_cc_test','03-24_mshr256_cc_test','02-23_mshr4_CBy_efectivos','02-23_mshr8_CBy_efectivos','02-23_mshr16_CBy_efectivos','02-23_mshr32_CBy_efectivos','02-23_mshr64_CBy_efectivos','02-23_mshr128_CBy_efectivos','02-23_mshr256_CBy_efectivos']
-    
+
     #nombre_resumen = ['02-10_mshr32','02-19_prueba_dir_32','02-19_prueba_dir_32_2']
-    
+
     #nombre_resumen = ['02-06_mshr16','02-06_mshr32','02-06_mshr64','02-06_mshr128','02-06_mshr256']
 
     #nombre_resumen = ['01-28_mshr16_128L2','01-28_mshr32_128L2' ,'01-28_mshr64_128L2','01-28_mshr128_128L2','01-28_mshr256_128L2','01-28_mshr16_512L2','01-28_mshr32_512L2' ,'01-28_mshr64_512L2','01-28_mshr128_512L2','01-28_mshr256_512L2']
@@ -2187,13 +2188,13 @@ if __name__ == '__main__':
 
     #ticks = ['BlackS','DCT','Dwt','FastWalsh','Floyd','MatrixT','Mersenne','QuasiRand','Gaussian','Reduction','Scan']
     #benchmarks_amd =['BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RecursiveGaussian','Reduction','ScanLargeArrays']
-    
+
     benchmarks_amd = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution']
-    
+
     #benchmarks_amd = ['BinomialOption','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose']
     #benchmarks_amd = ['BlackScholes','FastWalshTransform','FloydWarshall','MatrixMultiplication','MersenneTwister']
     benchmarks_rodinia = ['backprop','bfs','b+tree','gaussian','kmeans','lud','streamcluster']
-    
+
     BENCHMARKS = benchmarks_amd
     ticks = BENCHMARKS
     directorio_salida = contenedor_de_datos+'/'+nombre_resumen[0]+'_resumen'
@@ -2257,13 +2258,13 @@ if __name__ == '__main__':
         #comparar_velocidad('/nfs/gap/fracanma/benchmark/resultados/prueba_resumen/grafico')fracanma/benchmark/resultados/prueba_resumen/grafico')
         #gc.collect()
     #grafica_ipc_opc(dict_por_instrucciones)
-    graficas_no_blocking_store(dict_por_instrucciones)
+    #graficas_no_blocking_store(dict_por_instrucciones)
     #graficas_coalesce(dict_por_instrucciones)
     IPCmultitest(DIR_GRAFICOS+'/por_instrucciones/', dict_por_instrucciones)
     barras_opc(DIR_GRAFICOS, dict_por_instrucciones)
     analisis_stall(DIR_GRAFICOS, dict_por_instrucciones)
     benchXexp(DIR_GRAFICOS, dict_por_instrucciones)
-    '''                       
+    '''
     pool.starmap_async(IPCmultitest,[(DIR_GRAFICOS+'/por_instrucciones/', dict_por_instrucciones)])
     pool.starmap_async(barras_opc,[(DIR_GRAFICOS, dict_por_instrucciones)])
     pool.starmap_async(analisis_stall,[(DIR_GRAFICOS, dict_por_instrucciones)])
