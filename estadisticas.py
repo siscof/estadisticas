@@ -2115,7 +2115,7 @@ if __name__ == '__main__':
     #nombre_resumen = ['04-16_mshr32_solo_no_blocking_store_10CU','no_blocking_write_mshr_disabled']
     #nombre_resumen = ['04-16_mshr32_solo_coalesce_gpu_10CU','04-16_mshr32_coalesce_gpu_mixto_10CU','coalesce_mshr_disabled']
     nombre_resumen = ['07-03_nmoesi_mshr16_test_statistics2','07-03_nmoesi_mshr32_test_statistics2','07-03_nmoesi_mshr256_test_statistics2']
-    nombre_resumen = ['07-29_nmoesi_mshr16_test','07-29_nmoesi_mshr32_test','07-29_nmoesi_mshr256_test']
+    nombre_resumen = ['07-29_nmoesi_mshr16_test2','07-29_nmoesi_mshr32_test2','07-29_nmoesi_mshr256_test2']
     #,'06-22_nmoesi_mshr16_mshr_estatico_recursosextra','06-22_nmoesi_mshr32_mshr_estatico_recursosextra','06-22_nmoesi_mshr256_mshr_estatico_recursosextra']
 
     # variables de los test
