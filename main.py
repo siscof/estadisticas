@@ -43,8 +43,8 @@ def cargar_datos(origen_datos,archivos):
             lista_nombres.append(aux[len(aux)-1])
             
         for bench in os.listdir(directorio_exp):
-            
-            args.append((bench,archivos, ["tunk"], directorio_exp))
+            if bench in BENCHMARKS :
+                args.append((bench,archivos, ["Ttunk"], directorio_exp))
 
         pool_result.append(pool.starmap_async(loadworker, args))
 
@@ -73,8 +73,8 @@ def cargar_datos_sequencial(origen_datos,archivos):
             lista_nombres.append(aux[len(aux)-1])
         
         for bench in os.listdir(directorio_exp):
-             
-            datos_bench.append(loadworker(bench,archivos, ["tunk"], directorio_exp))
+            if bench in BENCHMARKS :
+                datos_bench.append(loadworker(bench,archivos, ["Ttunk"], directorio_exp))
         
         datos_cargados[lista_nombres[i]] = dict(zip(BENCHMARKS,datos_bench))
         i = i + 1
@@ -103,6 +103,17 @@ def loadworker(bench,archivos, TESTS, directorio_exp):
             
     return dict_general
     
+    
+def plot_opc(ax,datos):
+    
+    intervalo = calcular_intervalo(datos[test][bench]['device-spatial-report'][''],'cycle')
+    
+    for test in datos.keys():
+        for bench in datos[test].keys():
+            if intervalo == 0 :
+                intervalo = datos[test][bench]['device-spatial-report'][' cycle'][0]
+            pd.rolling_mean(datos[test][bench]['device-spatial-report'].loc[:,' total_i']/intervalo, 20)
+            
 
 if __name__ == '__main__':
 
@@ -112,10 +123,16 @@ if __name__ == '__main__':
     pprint.pprint("hola")
     
     datos = cargar_datos_sequencial(["/nfs/gap/fracanma/benchmark/resultados/09-07_nmoesi_mshr32_tunk_conL1/"],["device-spatial-report","extra-report_ipc"])
+
+    f, t = plt.subplots()
+    f.set_size_inches(15, 10)
+    f.set_dpi(300)
     
-    pprint.pprint(datos)
     
-    #pprint.pprint(datos.keys())
+    
+    directorio_salida = "/nfs/gap/fracanma/benchmark/resultados/09-07_nmoesi_mshr32_tunk_conL1/"
+    
+    
     
     
     
