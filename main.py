@@ -131,12 +131,34 @@ def plot_mshr_size(axis,datos,index):
     df_mean = pd.rolling_mean(datos2.loc[:,['MSHR_size']], 20)
     df_mean.plot(ax=axis)
     
-def axis_config(ax,title,ylabel,yticks,xlabel,xticks):
+def plot_latencia_memoria(axis,datos,index):
+    
+    datos2 = datos.set_index(datos[index].cumsum())
+    df_mean = pd.rolling_mean(datos2['mem_acc_lat']/datos2['mem_acc_end'], 20)
+    df_mean.plot(ax=axis)
+    
+def plot_wg_unmapped(axis,datos,index):
+    
+    datos2 = datos.set_index(datos[index].cumsum())
+    df_mean = pd.rolling_mean(datos2['unmappedWG'], 20)
+    df_mean.plot(ax=axis)
+    
+def axis_config(axis,title = '', ylabel = '', yticks = [], xlabel = '', xticks = []):
     axis.set_title(title)
     plt.legend()
     axis.set_ylabel(ylabel)
     axis.set_ylim(bottom = 0)
-    axis.set_xticks([])
+    axis.set_xticks(xticks)
+    axis.set_ylabel(xlabel)
+    
+def ajustar_resolucion(datos,num_puntos = 0, tamanyo_grupo = 0)
+    for test in  datos:
+        for bench in  test:
+            for df in bench:
+                if type(df) == pd.DataFrame :
+                    if tamanyo_grupo != 0 :
+                        df = df.groupby( lambda x :  (x // tamanyoGrupo) * tamanyoGrupo).sum()
+    
     
     
 def comprobar_estructura_datos(datos):
@@ -170,26 +192,43 @@ if __name__ == '__main__':
     datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
     
     comprobar_estructura_datos(datos)
+    
+    ajustar_resolucion(datos)
 
-    f, t = plt.subplots(2)
+    f, t = plt.subplots(2,2)
     f.set_size_inches(15, 10)
     f.set_dpi(300)
     
     for bench in BENCHMARKS:
         for test in datos.keys():
             try:
-                plot_opc(t[0],datos[test][bench]['device-spatial-report'], index='cycle')
+                plot_opc(t[0][0],datos[test][bench]['device-spatial-report'], index='total_i')
+                axis_config(t[0][0],title = 'OPC')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
-                plot_mshr_size(t[1],datos[test][bench]['device-spatial-report'], index='cycle')
+                plot_mshr_size(t[1][0],datos[test][bench]['device-spatial-report'], index='total_i')
+                axis_config(t[1][0], title='mshr size')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
                 
+            try:
+                plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index='total_i')
+                axis_config(t[1][1], title = 'latencia de memoria')
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
+            try:
+                plot_wg_unmapped(t[0][1],datos[test][bench]['device-spatial-report'], index='total_i')
+                axis_config(t[0][1], title = 'WGs finalizados')
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
         f.savefig('/home/sisco/workspace/pruebas/'+bench+'_'+'opc.eps',format='eps')
-        for axis in t:
-            axis.cla()
+        for l in t:
+            for axis in l:
+                axis.cla()
     
     directorio_salida = "/nfs/gap/fracanma/benchmark/resultados/09-07_nmoesi_mshr32_tunk_conL1/"
     
