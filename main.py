@@ -118,36 +118,75 @@ def loadworker(bench,archivos, TESTS, directorio_exp):
     return dict_general
     
     
-def plot_opc(axis,datos,index):
+def plot_opc(axis,datos,index, legend_label=''):
     
     intervalo = datos['cycle'][0]
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = pd.rolling_mean(datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op']].sum(1)/intervalo, 10)
+    df_mean = pd.rolling_mean(datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1)/intervalo, 20)
+    
+    if legend_label != '':
+        df_mean.columns = [legend_label]
+    
+    df_mean.plot(ax=axis)
+    #axis.set_ylim(bottom = 60,top = 140)
+    
+def plot_mshr_size(axis,datos,index, legend_label=''):
+    
+    datos2 = datos.set_index(datos[index].cumsum())
+    df_mean = pd.rolling_mean(datos2.loc[:,['MSHR_size']], 20)
+    #df_mean = datos2.loc[:,['MSHR_size']]
+    
+        
+    df_mean.plot(ax=axis,legend=False)
+    
+def plot_latencia_memoria(axis,datos,index, legend_label=''):
+    
+    datos2 = datos.set_index(datos[index].cumsum())
+    df_mean = pd.rolling_mean(datos2['mem_acc_lat']/datos2['mem_acc_end'], 20)
+    
+    if legend_label != '':
+        df_mean.columns = [legend_label]
+    
     df_mean.plot(ax=axis)
     
-def plot_mshr_size(axis,datos,index):
+def plot_wg_unmapped(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    #df_mean = pd.rolling_mean(datos2.loc[:,['MSHR_size']], 10)
-    datos2.loc[:,['MSHR_size']].plot(ax=axis)
+    df_mean = pd.rolling_mean(datos2['unmappedWG'], 20)
+    #df_mean = datos2['unmappedWG']
     
-def plot_latencia_memoria(axis,datos,index):
+    if legend_label != '':
+        df_mean.columns = [legend_label]
+    
+    df_mean.plot(ax=axis)
+    
+def plot_wg_active(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = pd.rolling_mean(datos2['mem_acc_lat']/datos2['mem_acc_end'], 10)
-    (datos2['mem_acc_lat']/datos2['mem_acc_end']).plot(ax=axis)
+    df = pd.DataFrame((datos2['mappedWG'] - datos2['unmappedWG']).cumsum(),columns=[legend_label])
+    #df_mean = datos2['unmappedWG']
     
-def plot_wg_unmapped(axis,datos,index):
+    #if legend_label != '':
+    #    df.columns = [legend_label]
+    
+    df.plot(ax=axis)
+    
+def plot_opc_accu(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = datos2['unmappedWG']
+    df_mean = pd.rolling_mean(datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum().div(datos2.loc[:,['cycle']].cumsum()['cycle']), 20)
+    #df_mean = datos2['unmappedWG']
+    
+    if legend_label != '':
+        df_mean.columns = [legend_label]
+    
     df_mean.plot(ax=axis)
     
 def axis_config(axis,title = '', ylabel = '', yticks = [], xlabel = '', xticks = []):
     axis.set_title(title)
-    plt.legend()
+    #plt.legend()
     axis.set_ylabel(ylabel)
-    axis.set_ylim(bottom = 0)
+    #axis.set_ylim(bottom = 0)
     axis.set_xticks(xticks)
     axis.set_ylabel(xlabel)
     
@@ -172,12 +211,35 @@ def comprobar_estructura_datos(datos):
         return False
     else:
         return True
+        
+def generar_hoja_calculo(datos):
+    
+    df = pd.DataFrame()
+    
+    for bench in sorted_nicely(BENCHMARKS):
+        for test in sorted_nicely(datos.keys()):
+         
+            try:    
+            #df = df.append(pd.DataFrame([(test),(bench),(datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
+                df = df.append(pd.DataFrame([(test , bench,datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
+    df.set_index(['benchmark','test'],inplace=True)
+
+    df.to_excel('/nfs/gap/fracanma/benchmark/resultados/09-13/tunk.xlsx',engine='xlsxwriter')
+    
+    return
             
     
     
             
 
 if __name__ == '__main__':
+    
+    sb.set_style("whitegrid")
+    #cmap = sb.color_palette("Greys_r", 3)
+    #sb.set_palette(cmap, n_colors=3)
 
     BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution']
     test = "tunk"
@@ -187,52 +249,71 @@ if __name__ == '__main__':
     
     dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr16_mshr_dinamico_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr32_mshr_dinamico_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr256_mshr_dinamico_conL1/"]
+    "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr256_mshr_dinamico_conL1/","/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
+    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
+    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
     
-    #dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
-    #"/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
-    #"/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
-    
+    '''dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
+    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
+    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
+    '''
     datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
     
     comprobar_estructura_datos(datos)
     
     #ajustar_resolucion(datos)
 
-    f, t = plt.subplots(2,2)
-    f.set_size_inches(15, 10)
+    f, t = plt.subplots(2,3)
+    f.set_size_inches(10, 7)
     f.set_dpi(300)
     
-    for bench in BENCHMARKS:
-        for test in datos.keys():
+    index_x = 'total_i' #'cycle' #'total_i'
+    
+    for bench in sorted_nicely(BENCHMARKS):
+        for test in sorted_nicely(datos.keys()):
+            
             try:
-                plot_opc(t[0][0],datos[test][bench]['device-spatial-report'], index='total_i')
-                #axis_config(t[0][0],title = 'OPC')
+                plot_wg_active(t[1][2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[1][2],title = 'wg active')
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+            
+            try:
+                plot_opc(t[0][0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[0][0],title = 'OPC')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
-                plot_mshr_size(t[1][0],datos[test][bench]['device-spatial-report'], index='cycle')
-                #axis_config(t[1][0], title='mshr size')
+                plot_mshr_size(t[1][0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[1][0], title='mshr size')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
                 
             try:
-                plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index='total_i')
-                #axis_config(t[1][1], title = 'latencia de memoria')
+                plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[1][1], title = 'latencia de memoria')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
-                plot_wg_unmapped(t[0][1],datos[test][bench]['device-spatial-report'], index='total_i')
-                #axis_config(t[0][1], title = 'WGs finalizados')
+                plot_wg_unmapped(t[0][1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[0][1], title = 'WGs finalizados')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
-        f.savefig('/nfs/gap/fracanma/benchmark/resultados/09-13/'+bench+'_'+'opc.eps',format='eps')
+            try:
+                plot_opc_accu(t[0][2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[0][2], title = 'opc acumulado')
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
+        f.savefig('/nfs/gap/fracanma/benchmark/resultados/09-13/'+bench+'_'+'opc.pdf',format='pdf')
         for l in t:
             for axis in l:
                 axis.cla()
+    
+    generar_hoja_calculo(datos)
     
     directorio_salida = "/nfs/gap/fracanma/benchmark/resultados/09-13/"
     
