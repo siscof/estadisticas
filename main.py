@@ -181,10 +181,27 @@ def plot_opc_accu(axis,datos,index, legend_label=''):
         df_mean.columns = [legend_label]
     
     df_mean.plot(ax=axis)
+        
+def plot_try_points(axis,datos,index, legend_label=''):
+    
+    aux = []
+    
+    for i in datos['MSHR_size']:
+        if i == 0:
+            aux.append(1)
+        else:
+            aux.append(0)
+    
+    df= pd.DataFrame(aux)
+    
+    if legend_label != '':
+        df.columns = [legend_label]
+    
+    df.plot(ax=axis)
     
 def axis_config(axis,title = '', ylabel = '', yticks = [], xlabel = '', xticks = []):
     axis.set_title(title)
-    #plt.legend()
+    plt.legend()
     axis.set_ylabel(ylabel)
     #axis.set_ylim(bottom = 0)
     axis.set_xticks(xticks)
@@ -240,57 +257,73 @@ if __name__ == '__main__':
     sb.set_style("whitegrid")
     #cmap = sb.color_palette("Greys_r", 3)
     #sb.set_palette(cmap, n_colors=3)
+    
+    #
+    BENCHMARKS = ['DwtHaar1D']
 
-    BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution']
+    #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution']
     test = "tunk"
     bench = 'tunk'
     
     pprint.pprint("hola")
     
-    dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr16_mshr_dinamico_conL1/",
+    '''dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr16_mshr_dinamico_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr32_mshr_dinamico_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr256_mshr_dinamico_conL1/","/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
-    
+    '''
     '''dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
     "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
     '''
+    
+    experimentos = ['09-14_nmoesi_mshr16_mshr_dinamico_conL1','09-14_nmoesi_mshr256_mshr_dinamico_conL1','09-14_nmoesi_mshr32_mshr_dinamico_conL1']
+
+    #experimentos = ['09-15_nmoesi_mshr16_estatico_conL1','09-15_nmoesi_mshr32_estatico_conL1','09-15_nmoesi_mshr64_estatico_conL1','09-15_nmoesi_mshr128_estatico_conL1','09-15_nmoesi_mshr256_estatico_conL1']
+        
+    f, t = plt.subplots(4,1)
+    f.set_size_inches(10, 15)
+    f.set_dpi(300)
+    
+    index_x = 'cycle' #'total_i'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/09-16/'
+    dir_experimentos = []
+    
+    for exp in experimentos:
+        dir_experimentos.append(directorio_resultados+'/'+exp)
+        
     datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
     
     comprobar_estructura_datos(datos)
     
     #ajustar_resolucion(datos)
 
-    f, t = plt.subplots(2,3)
-    f.set_size_inches(10, 7)
-    f.set_dpi(300)
-    
-    index_x = 'total_i' #'cycle' #'total_i'
+
     
     for bench in sorted_nicely(BENCHMARKS):
         for test in sorted_nicely(datos.keys()):
             
-            try:
+            '''try:
                 plot_wg_active(t[1][2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 axis_config(t[1][2],title = 'wg active')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
-            
+            '''
             try:
-                plot_opc(t[0][0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
-                axis_config(t[0][0],title = 'OPC')
+                plot_opc(t[0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[0],title = 'OPC')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
-                plot_mshr_size(t[1][0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
-                axis_config(t[1][0], title='mshr size')
+                plot_mshr_size(t[1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[1], title='mshr size')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
                 
-            try:
+            '''try:
                 plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 axis_config(t[1][1], title = 'latencia de memoria')
             except KeyError as e:
@@ -301,17 +334,25 @@ if __name__ == '__main__':
                 axis_config(t[0][1], title = 'WGs finalizados')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
-                
+            ''' 
             try:
-                plot_opc_accu(t[0][2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
-                axis_config(t[0][2], title = 'opc acumulado')
+                plot_opc_accu(t[2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                axis_config(t[2], title = 'opc acumulado')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+              
+            try:
+                plot_try_points(t[3],datos[test][bench]['device-spatial-report'], index='cycle', legend_label=test)
+                axis_config(t[3], title = 'opc acumulado')
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+            
+            
                 
-        f.savefig('/nfs/gap/fracanma/benchmark/resultados/09-13/'+bench+'_'+'opc.pdf',format='pdf')
+        f.savefig(directorio_salida+bench+'_'+'opc.pdf',format='pdf')
         for l in t:
-            for axis in l:
-                axis.cla()
+            #for axis in l:
+            l.cla()
     
     generar_hoja_calculo(datos)
     
