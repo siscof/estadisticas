@@ -122,21 +122,24 @@ def plot_opc(axis,datos,index, legend_label=''):
     
     intervalo = datos['cycle'][0]
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = pd.rolling_mean(datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1)/intervalo, 20)
+    df_mean = pd.DataFrame(pd.rolling_mean(datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1)/intervalo, 20))
+    df_mean.replace(0, np.nan,inplace=True)
     
-    if legend_label != '':
+    '''if legend_label != '':
         df_mean.columns = [legend_label]
-    
+    '''
     df_mean.plot(ax=axis)
     #axis.set_ylim(bottom = 60,top = 140)
     
 def plot_mshr_size(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = pd.rolling_mean(datos2.loc[:,['MSHR_size']], 20)
+    df_mean = datos2.loc[:,['MSHR_size']]
     #df_mean = datos2.loc[:,['MSHR_size']]
+
     
-        
+  
+             
     df_mean.plot(ax=axis,legend=False)
     
 def plot_latencia_memoria(axis,datos,index, legend_label=''):
@@ -174,7 +177,7 @@ def plot_wg_active(axis,datos,index, legend_label=''):
 def plot_opc_accu(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum().div(datos2.loc[:,['cycle']].cumsum()['cycle'])
+    df_mean = pd.DataFrame(datos2.loc[:,['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum().div(datos2.loc[:,['cycle']].cumsum()['cycle']),columns=[legend_label])
     #df_mean = datos2['unmappedWG']
     
     if legend_label != '':
@@ -201,20 +204,12 @@ def plot_lim_accu(axis, datos,bench,index):
         
 def plot_try_points(axis,datos,index, legend_label=''):
     
-    aux = []
+
     
-    for i in datos['MSHR_size']:
-        if i == 0:
-            aux.append(1)
-        else:
-            aux.append(0)
-    
-    df= pd.DataFrame(aux)
-    
-    if legend_label != '':
-        df.columns = [legend_label]
-    
-    df.plot(ax=axis)
+    for i in zip(datos[index].cumsum(),datos['MSHR_size'].values):
+        if i[1] == 0:
+            axis.axvline(x=i[0],linewidth=1, color='k',ls='--')   
+
     
 def axis_config(axis,title = '', ylabel = '', yticks = [], xlabel = '', xticks = []):
     axis.set_title(title)
@@ -275,9 +270,9 @@ if __name__ == '__main__':
     #cmap = sb.color_palette("Greys_r", 3)
     #sb.set_palette(cmap, n_colors=3)
     
-    BENCHMARKS = ['DwtHaar1D']
+    #BENCHMARKS = ['DwtHaar1D']
 
-    #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution']
+    BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution']
     test = "tunk"
     bench = 'tunk'
     
@@ -296,17 +291,19 @@ if __name__ == '__main__':
     
     #experimentos = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1']
     
-    experimentos = ['09-16_nmoesi_mshr16_din_scalar8_conL1','09-16_nmoesi_mshr32_din_scalar8_conL1','09-16_nmoesi_mshr64_din_scalar8_conL1','09-16_nmoesi_mshr128_din_scalar8_conL1','09-16_nmoesi_mshr256_din_scalar8_conL1']
+    #experimentos = ['09-16_nmoesi_mshr16_din_scalar8_conL1','09-16_nmoesi_mshr32_din_scalar8_conL1','09-16_nmoesi_mshr64_din_scalar8_conL1','09-16_nmoesi_mshr128_din_scalar8_conL1','09-16_nmoesi_mshr256_din_scalar8_conL1','09-17_nmoesi_mshr32_B30000_conL1','09-17_nmoesi_mshr32_B_conL1']
 
     #experimentos = ['09-15_nmoesi_mshr16_estatico_conL1','09-15_nmoesi_mshr32_estatico_conL1','09-15_nmoesi_mshr64_estatico_conL1','09-15_nmoesi_mshr128_estatico_conL1','09-15_nmoesi_mshr256_estatico_conL1']
     
-    experimentos = ['09-16_nmoesi_mshr16_din_scalar8_conL1','09-17_nmoesi_mshr16_din_scalar8_conL1']
+    #experimentos = ['09-17_nmoesi_mshr16_A_conL1','09-17_nmoesi_mshr32_B30000_conL1','09-17_nmoesi_mshr64_A_conL1','09-17_nmoesi_mshr128_B_conL1','09-17_nmoesi_mshr256_A_conL1']
         
+    experimentos = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1','09-17_nmoesi_mshr32_B30000_conL1']    
+    
     f, t = plt.subplots(4,1)
     f.set_size_inches(10, 15)
     f.set_dpi(300)
     
-    index_x = 'total_i' #'cycle' #'total_i'
+    index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
     directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/09-17_dinamicos/'
     dir_experimentos = []
@@ -343,6 +340,7 @@ if __name__ == '__main__':
             try:
                 plot_opc(t[0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 axis_config(t[0],title = 'OPC')
+                t[0].legend()
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
@@ -372,11 +370,11 @@ if __name__ == '__main__':
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
               
-            try:
-                plot_try_points(t[3],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
-                axis_config(t[3], title = 'training points')
-            except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+        try:
+            plot_try_points(t[2],datos['09-17_nmoesi_mshr32_B30000_conL1'][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            #axis_config(t[2], title = 'training points')
+        except KeyError as e:
+            print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
             
             
         if not os.path.exists(directorio_salida):
