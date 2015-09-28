@@ -134,13 +134,13 @@ def plot_opc(axis,datos,index, legend_label=''):
 def plot_mshr_size(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = datos2.loc[:,['MSHR_size']]
+    df_mean = datos2.loc[:,['MSHR_size']].replace(0,np.nan)
     #df_mean = datos2.loc[:,['MSHR_size']]
 
     
   
              
-    df_mean.plot(ax=axis,legend=False)
+    df_mean.interpolate().plot(ax=axis,legend=False)
     
 def plot_latencia_memoria(axis,datos,index, legend_label=''):
     
@@ -297,7 +297,9 @@ if __name__ == '__main__':
     
     #experimentos = ['09-17_nmoesi_mshr16_A_conL1','09-17_nmoesi_mshr32_B30000_conL1','09-17_nmoesi_mshr64_A_conL1','09-17_nmoesi_mshr128_B_conL1','09-17_nmoesi_mshr256_A_conL1']
         
-    experimentos = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1','09-17_nmoesi_mshr32_B30000_conL1']    
+    #experimentos = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1','09-17_nmoesi_mshr32_B30000_conL1'] 
+    
+    experimentos = ['09-28_nmoesi_mshr32_5000_conL1','09-28_nmoesi_mshr32_10000_conL1','09-28_nmoesi_mshr32_20000_conL1','09-28_nmoesi_mshr32_30000_conL1']   
     
     f, t = plt.subplots(4,1)
     f.set_size_inches(10, 15)
@@ -305,7 +307,7 @@ if __name__ == '__main__':
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/09-17_dinamicos/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/09-21/'
     dir_experimentos = []
     
     for exp in experimentos:
@@ -314,8 +316,8 @@ if __name__ == '__main__':
     datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
     
     dir_estaticos = []
-    for exp in ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1']:
-        dir_estaticos.append(directorio_resultados+'/'+exp)  
+    #for exp in ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1']:
+     #   dir_estaticos.append(directorio_resultados+'/'+exp)  
     
     
     
@@ -371,7 +373,7 @@ if __name__ == '__main__':
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
               
         try:
-            plot_try_points(t[2],datos['09-17_nmoesi_mshr32_B30000_conL1'][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            plot_try_points(t[2],datos['09-21_nmoesi_mshr32_30000_conL1'][bench]['device-spatial-report'], index=index_x, legend_label=test)
             #axis_config(t[2], title = 'training points')
         except KeyError as e:
             print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
@@ -388,9 +390,7 @@ if __name__ == '__main__':
             #for axis in l:
             l.cla()
     
-    generar_hoja_calculo(datos)
-    
-    directorio_salida = "/nfs/gap/fracanma/benchmark/resultados/09-13/"
+    #generar_hoja_calculo(datos)
     
     
     
