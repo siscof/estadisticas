@@ -12,6 +12,7 @@ import pprint
 import gc
 import re
 import seaborn as sb
+from itertools import cycle, islice
 
 def sorted_nicely( l ):
     """ Sorts the given iterable in the way that is expected.
@@ -205,7 +206,7 @@ def plot_lim_accu(axis, datos,bench,index,legend_label=''):
         
 
         
-def plot_try_points(axis,datos,index, legend_label=''):
+def plot_train_points(axis,datos,index, legend_label=''):
     for i in zip(datos[index].cumsum(),datos['MSHR_size'].values):
         if i[1] == 0:
             axis.axvline(x=i[0],linewidth=1, color='k',ls='--')   
@@ -227,16 +228,18 @@ def plot_opc_barras(axis,datos,file_input, benchmarks,index, legend_label=''):
                 opc[test][bench] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
             except KeyError as e:
                 print('tunk')
-                
-            
+    
+    
     opc.plot(ax=axis,kind='bar')
 
     
-def axis_config(axis,title = '', ylabel = '', yticks = [], xlabel = '', xticks = []):
+def axis_config(axis,title = '', ylabel = '', yticks = [], y_lim = None, xlabel = '', xticks = []):
     axis.set_title(title)
     plt.legend()
     axis.set_ylabel(ylabel)
     axis.set_ylim(bottom = 0)
+    if not(y_lim is None):
+        axis.set_ylim(top = y_lim[1])
     axis.set_xticks(xticks)
     axis.set_ylabel(xlabel)
     
@@ -288,15 +291,17 @@ def generar_hoja_calculo(datos):
 if __name__ == '__main__':
     
     sb.set_style("whitegrid")
-    cmap = sb.color_palette("Set2", 10)
-    sb.set_palette(cmap, n_colors=10)
+    cmap = sb.color_palette("Set2", 15)
+    sb.set_palette(cmap, n_colors=15)
     
     mpl.rcParams['lines.linewidth'] = 3
     
     
     #BENCHMARKS = ['DwtHaar1D']
+    
+    #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
 
-    BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
+    BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
     test = "tunk"
     bench = 'tunk'
     
@@ -326,7 +331,8 @@ if __name__ == '__main__':
     #experimentos = ['09-28_nmoesi_mshr32_b5000_conL1','09-28_nmoesi_mshr32_b10000_conL1','09-28_nmoesi_mshr32_b20000_conL1','09-28_nmoesi_mshr32_b30000_conL1'] 
     
     #experimentos = ['09-30_nmoesi_mshr32_5000_conL1','09-30_nmoesi_mshr32_10000_conL1','09-30_nmoesi_mshr32_20000_conL1','09-30_nmoesi_mshr32_30000_conL1']    
-    experimentos = ['09-30_nmoesi_mshr32_sinmejoras30000_conL1','09-30_nmoesi_mshr32_b5000_conL1','09-30_nmoesi_mshr32_b10000_conL1','09-30_nmoesi_mshr32_b20000_conL1','09-30_nmoesi_mshr32_b30000_conL1']    
+    experimentos = ['09-30_nmoesi_mshr32_b5000_conL1','09-30_nmoesi_mshr32_b10000_conL1','09-30_nmoesi_mshr32_b20000_conL1','09-30_nmoesi_mshr32_b30000_conL1']
+       
     
     f, t = plt.subplots(4,1)
     f.set_size_inches(10, 15)
@@ -334,7 +340,7 @@ if __name__ == '__main__':
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/09-21/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-01/'
     dir_experimentos = []
     
     for exp in experimentos:
@@ -374,7 +380,7 @@ if __name__ == '__main__':
                 
             try:
                 plot_mshr_size(t[1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
-                axis_config(t[1], title='mshr size')
+                axis_config(t[1], title='mshr size',y_lim = [0,256])
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
                 
@@ -406,8 +412,8 @@ if __name__ == '__main__':
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
               
         try:
-            plot_try_points(t[1],datos[experimentos[2]][bench]['device-spatial-report'], index=index_x, legend_label=test)
-            plot_gpu_idle(t[0],datos[experimentos[2]][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            plot_train_points(t[1],datos[experimentos[3]][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            plot_gpu_idle(t[0],datos[experimentos[3]][bench]['device-spatial-report'], index=index_x, legend_label=test)
             
             plot_lim_accu(t[2], prestaciones_estatico,bench,index=index_x,legend_label=test)
             #axis_config(t[2], title = 'training points')
@@ -420,8 +426,8 @@ if __name__ == '__main__':
             
         
         #plot_lim_accu(t[1],prestaciones_estatico,bench, index_x)
-        
-        f.savefig(directorio_salida+bench+'.pdf',format='pdf')
+        f.suptitle(bench, fontsize=25)
+        f.savefig(directorio_salida+bench+'.pdf',format='pdf',bbox_inches='tight')
         for l in t:
             #for axis in l:
             l.cla()
@@ -429,7 +435,8 @@ if __name__ == '__main__':
     f, t = plt.subplots() 
     datos.update(prestaciones_estatico)       
     plot_opc_barras(t,datos,'device-spatial-report', BENCHMARKS,index_x, legend_label='')
-    f.savefig(directorio_salida+'opc.pdf',format='pdf')
+    t.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    f.savefig(directorio_salida+'opc.pdf',format='pdf',bbox_inches='tight')
     
     #generar_hoja_calculo(datos)
     
