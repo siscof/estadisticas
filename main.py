@@ -528,12 +528,6 @@ if __name__ == '__main__':
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
-
-                
-            try:
-                plot_load_envuelo(t2[2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
-            except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
         for test in sorted_nicely(prestaciones_estatico.keys()): 
             try:
@@ -570,7 +564,7 @@ if __name__ == '__main__':
         
         
         axis_config(t2[0],title = 'store en vuelo')
-        axis_config(t2[1], title='latencia store')
+        axis_config(t2[1], title= 'latencia store')
         axis_config(t2[2], title = 'load en vuelo')
         axis_config(t2[3], title = 'latencia load')
             
