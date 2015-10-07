@@ -223,7 +223,7 @@ def plot_load_envuelo(axis,datos,index, legend_label=''):
 
     datos2 = ajustar_resolucion(datos)
     datos2 = datos2.set_index(datos2[index].cumsum())
-    df_mean = datos2['load_start'].cumsum()-datos2['load_end'].cumsum()
+    df_mean = datos2['vcache_load_start'].cumsum()-datos2['vcache_load_finish'].cumsum()
     
     if legend_label != '':
         df_mean.columns = [legend_label]
@@ -234,7 +234,7 @@ def plot_write_envuelo(axis,datos,index, legend_label=''):
 
     datos2 = ajustar_resolucion(datos)
     datos2 = datos2.set_index(datos2[index].cumsum())
-    df_mean = datos2['write_start'].cumsum()-datos2['write_end'].cumsum()
+    df_mean = datos2['scache_start'].cumsum()-datos2['scache_finish'].cumsum()
     
     if legend_label != '':
         df_mean.columns = [legend_label]
@@ -419,7 +419,8 @@ if __name__ == '__main__':
     
     #experimentos = ['09-30_nmoesi_mshr32_5000_conL1','09-30_nmoesi_mshr32_10000_conL1','09-30_nmoesi_mshr32_20000_conL1','09-30_nmoesi_mshr32_30000_conL1']    
     #experimentos = ['09-30_nmoesi_mshr32_b5000_conL1','09-30_nmoesi_mshr32_b10000_conL1','09-30_nmoesi_mshr32_b20000_conL1']
-    experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1']
+    #experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1']
+    experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1','10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1']
     
     f, t = plt.subplots(4,1)
     f.set_size_inches(10, 15)
