@@ -219,6 +219,21 @@ def plot_latencia_load(axis,datos,index, legend_label=''):
     
     df_mean.plot(ax=axis)
     
+def plot_retries(axis_lat,axis_num_retries,datos,index, legend_label=''):
+
+    datos2 = ajustar_resolucion(datos)
+    datos2 = datos2.set_index(datos2[index].cumsum())
+    df_mean = datos2['cache_retry_lat']/datos2['cache_retry_cont']
+    
+    if legend_label != '':
+        df_mean.columns = [legend_label]
+    
+    df_mean.plot(ax=axis_lat)
+    
+    if len(datos.index) > 100:
+        tamanyoGrupos = len(datos.index) // 100
+        pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).sum()['cache_retry_cont']).plot(ax=axis_num_retries)
+    
 def plot_load_envuelo(axis,datos,index, legend_label=''):
 
     datos2 = ajustar_resolucion(datos)
@@ -422,6 +437,8 @@ if __name__ == '__main__':
     #experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1']
     experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1','10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1']
     
+    experimentos = ['10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1','10-07_nmoesi_mshr32_retry_conL1']
+    
     f, t = plt.subplots(4,1)
     f.set_size_inches(10, 15)
     f.set_dpi(300)
@@ -468,7 +485,7 @@ if __name__ == '__main__':
         f.set_size_inches(10, 15)
         f.set_dpi(300)
     
-        f2, t2 = plt.subplots(4,1)
+        f2, t2 = plt.subplots(6,1)
         f2.set_size_inches(10, 15)
         f2.set_dpi(300)
         
@@ -528,6 +545,13 @@ if __name__ == '__main__':
                 plot_latencia_load(t2[3],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+            
+            try:
+                plot_retries(t2[4],t2[5],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
+
                 
                 
         for test in sorted_nicely(prestaciones_estatico.keys()): 
@@ -543,7 +567,7 @@ if __name__ == '__main__':
             plot_train_points(t[0],datos[experimentos[0]][bench]['device-spatial-report'], index=index_x, legend_label=test)
             #plot_gpu_idle(t[0],datos[experimentos[0]][bench]['device-spatial-report'], index=index_x, legend_label=test)
             
-            plot_lim_accu(t[2], prestaciones_estatico,bench,index=index_x,legend_label=test)
+            #plot_lim_accu(t[2], prestaciones_estatico,bench,index=index_x,legend_label=test)
             #axis_config(t[2], title = 'training points')
         except KeyError as e:
             print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
