@@ -232,7 +232,30 @@ def plot_retries(axis_lat,axis_num_retries,datos,index, legend_label=''):
     
     if len(datos.index) > 100:
         tamanyoGrupos = len(datos.index) // 100
-        pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).sum()['cache_retry_cont']).plot(ax=axis_num_retries)
+        pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).mean()['cache_retry_cont']).plot(ax=axis_num_retries)
+        
+        
+def plot_wavefronts(axis,datos,index, legend_label=''):
+
+   
+    if len(datos.index) > 100:
+        tamanyoGrupos = len(datos.index) // 100
+        pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).mean()['active_wavefronts']).plot(ax=axis)
+        return
+        
+    pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).mean()['active_wavefronts']).plot(ax=axis)
+    return
+    
+def plot_wavefronts_waiting(axis,datos,index, legend_label=''):
+
+   
+    if len(datos.index) > 100:
+        tamanyoGrupos = len(datos.index) // 100
+        pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).mean()['wavefronts_waiting_mem']).plot(ax=axis)
+        return
+        
+    pd.DataFrame(datos.groupby(lambda x : (x// tamanyoGrupos) * tamanyoGrupos).mean()['wavefronts_waiting_mem']).plot(ax=axis)
+    return
     
 def plot_load_envuelo(axis,datos,index, legend_label=''):
 
@@ -301,9 +324,13 @@ def plot_lim_accu(axis, datos,bench,index,legend_label=''):
 def plot_train_points(axis,datos,index, legend_label=''):
     a = [0]
     a.extend(datos[index].cumsum())
+    pintar = True
     for i in zip(a,datos['MSHR_size'].values):
-        if np.isnan(i[1]) or i[1] == 0 :
+        if (np.isnan(i[1]) or i[1] == 0) and pintar :
             axis.axvline(x=i[0],linewidth=1, color='k',ls='--')   
+            pintar = False
+        if not(np.isnan(i[1]) or i[1] == 0):
+            pintar = True
 
 def plot_gpu_idle(axis,datos,index, legend_label=''):
     for i in zip(datos[index].cumsum(),datos['gpu_idle'].values):
@@ -324,7 +351,7 @@ def plot_opc_barras(axis,datos,file_input, benchmarks,index, legend_label=''):
                 print('tunk')
          
         try:
-            opc.ix[bench] = opc.ix[bench] / opc['10-01_nmoesi_mshr32_lat300estatico_conL1'][bench]
+            opc.ix[bench] = opc.ix[bench] / opc['10-13_nmoesi_mshr32_estatico_conL1'][bench]
         except KeyError as e:
                 print('tunk')
         
@@ -332,7 +359,7 @@ def plot_opc_barras(axis,datos,file_input, benchmarks,index, legend_label=''):
     opc.plot(ax=axis,kind='bar')
 
     
-def axis_config(axis,title = '', ylabel = '', yticks = [], y_lim = None, xlabel = '', xticks = [], x_lim = None):
+def axis_config(axis,title = '', ylabel = '', yticks = [], y_lim = None, xlabel = '', xticks = [], x_lim = None,legend = None):
     axis.set_title(title)
     plt.legend()
     axis.set_ylabel(ylabel)
@@ -343,6 +370,12 @@ def axis_config(axis,title = '', ylabel = '', yticks = [], y_lim = None, xlabel 
     if not(x_lim is None):
         axis.set_xlim(x_lim)
     #axis.set_xticks(xticks)
+    
+    if not(legend is None):
+        axis.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    else:
+        axis.legend().remove()
+    
     axis.set_ylabel(xlabel)
     
 def ajustar_resolucion(df):
@@ -403,7 +436,7 @@ if __name__ == '__main__':
     
     #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
 
-    BENCHMARKS = ['BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
+    BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','MatrixMultiplication','MersenneTwister','QuasiRandomSequence','SimpleConvolution','SobelFilter']
     test = "tunk"
     bench = 'tunk'
     
@@ -435,9 +468,13 @@ if __name__ == '__main__':
     #experimentos = ['09-30_nmoesi_mshr32_5000_conL1','09-30_nmoesi_mshr32_10000_conL1','09-30_nmoesi_mshr32_20000_conL1','09-30_nmoesi_mshr32_30000_conL1']    
     #experimentos = ['09-30_nmoesi_mshr32_b5000_conL1','09-30_nmoesi_mshr32_b10000_conL1','09-30_nmoesi_mshr32_b20000_conL1']
     #experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1']
-    experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1','10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1']
+    #experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1','10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1']
     
-    experimentos = ['10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1','10-07_nmoesi_mshr32_retry_conL1']
+    #experimentos = ['10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1','10-07_nmoesi_mshr32_retry_conL1']
+    
+    experimentos = ['10-08_nmoesi_mshr32_dinamico20000_conL1','10-08_nmoesi_mshr32_trucado20000_conL1','10-13_nmoesi_mshr32_dinamico_forzado_conL1','10-13_nmoesi_mshr32_estatico_conL1']
+    
+    #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
     
     f, t = plt.subplots(4,1)
     f.set_size_inches(10, 15)
@@ -447,9 +484,11 @@ if __name__ == '__main__':
     f2.set_size_inches(10, 15)
     f2.set_dpi(300)
     
+    legend = ['dinamico_anterior','trucado_anterior','trucado_nuevo','estatico']
+    
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-05/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-08/'
     dir_experimentos = []
     
     for exp in experimentos:
@@ -463,7 +502,9 @@ if __name__ == '__main__':
     
     #experimentos_baseline = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1']
     
-    experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
+    #experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
+    
+    experimentos_baseline = ['10-13_nmoesi_mshr32_estatico_conL1']
     
     
     for exp in experimentos_baseline:
@@ -485,7 +526,7 @@ if __name__ == '__main__':
         f.set_size_inches(10, 15)
         f.set_dpi(300)
     
-        f2, t2 = plt.subplots(6,1)
+        f2, t2 = plt.subplots(9,1)
         f2.set_size_inches(10, 15)
         f2.set_dpi(300)
         
@@ -551,6 +592,22 @@ if __name__ == '__main__':
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
+            try:
+                plot_opc_accu(t2[6],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
+            try:
+                plot_wavefronts(t2[7],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+            
+            try:
+                plot_wavefronts_waiting(t2[8],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            except KeyError as e:
+                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                
 
                 
                 
@@ -588,10 +645,15 @@ if __name__ == '__main__':
        
         
         
-        axis_config(t2[0],title = 'store en vuelo')
+        axis_config(t2[0],title = 'store en vuelo',legend = legend)
         axis_config(t2[1], title= 'latencia store')
         axis_config(t2[2], title = 'load en vuelo')
         axis_config(t2[3], title = 'latencia load')
+        axis_config(t2[4], title = 'retry latency')
+        axis_config(t2[5], title = 'retries')
+        axis_config(t2[6], title = 'OPC acumulado')
+        axis_config(t2[7], title = 'wavefronts')
+        axis_config(t2[8], title = 'wavefronts waiting mem')
             
         #plot_lim_accu(t[1],prestaciones_estatico,bench, index_x)
         f2.suptitle(bench, fontsize=25)
@@ -621,7 +683,7 @@ if __name__ == '__main__':
     datos.update(prestaciones_estatico)       
     plot_opc_barras(t,datos,'device-spatial-report', BENCHMARKS,index_x, legend_label='')
     axis_config(t, title='speedup',y_lim = [0.6,1.6])
-    t.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    t.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     f.savefig(directorio_salida+'opc.pdf',format='pdf',bbox_inches='tight')
     
     #generar_hoja_calculo(datos)
