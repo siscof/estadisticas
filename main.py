@@ -472,7 +472,7 @@ if __name__ == '__main__':
     
     #experimentos = ['10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1','10-07_nmoesi_mshr32_retry_conL1']
     
-    experimentos = ['10-08_nmoesi_mshr32_dinamico20000_conL1','10-08_nmoesi_mshr32_trucado20000_conL1','10-13_nmoesi_mshr32_dinamico_forzado_conL1','10-13_nmoesi_mshr32_estatico_conL1']
+    experimentos = ['10-08_nmoesi_mshr32_dinamico20000_conL1','10-08_nmoesi_mshr32_trucado20000_conL1','10-13_nmoesi_mshr32_dinamico_conL1','10-13_nmoesi_mshr32_dinamico_forzado_conL1','10-13_nmoesi_mshr32_estatico_conL1']
     
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
     
@@ -484,7 +484,7 @@ if __name__ == '__main__':
     f2.set_size_inches(10, 15)
     f2.set_dpi(300)
     
-    legend = ['dinamico_anterior','trucado_anterior','trucado_nuevo','estatico']
+    legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
@@ -494,7 +494,7 @@ if __name__ == '__main__':
     for exp in experimentos:
         dir_experimentos.append(directorio_resultados+'/'+exp)
         
-    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
+    datos = cargar_datos_sequencial(dir_experimentos,["extra-report_ipc","device-spatial-report","extra-report_ipc"])
         
     df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
     
