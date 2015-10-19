@@ -378,6 +378,17 @@ def axis_config(axis,title = '', ylabel = '', yticks = [], y_lim = None, xlabel 
     
     axis.set_ylabel(xlabel)
     
+def plot_distribucion_lat(axis,datos,datos2,index, legend_label=''):
+    
+    aux.
+    
+    memEventsLoad = pd.DataFrame().join(pd.DataFrame(datos,columns=[test]), how = 'outer')
+    memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
+    memEventsLoad.ix[exp] = pd.DataFrame(df_aux[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_aux['access_load'].sum(0),columns=[exp]).transpose().ix[exp]
+                
+    memEventsLoad.plot(ax=axis, kind='bar',stacked=True,title='memEventsLoad')
+
+    
 def ajustar_resolucion(df):
      
     if len(df.index) > 100:
@@ -474,6 +485,8 @@ if __name__ == '__main__':
     
     experimentos = ['10-08_nmoesi_mshr32_dinamico20000_conL1','10-08_nmoesi_mshr32_trucado20000_conL1','10-13_nmoesi_mshr32_dinamico_conL1','10-13_nmoesi_mshr32_dinamico_forzado_conL1','10-13_nmoesi_mshr32_estatico_conL1']
     
+    experimentos = ['10-19_nmoesi_mshr16_lat100_estatico_conL1','10-19_nmoesi_mshr32_lat100_estatico_conL1','10-19_nmoesi_mshr128_lat100_estatico_conL1']
+    
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
     
     f, t = plt.subplots(4,1)
@@ -504,7 +517,7 @@ if __name__ == '__main__':
     
     #experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
     
-    experimentos_baseline = ['10-13_nmoesi_mshr32_estatico_conL1']
+    #experimentos_baseline = ['10-13_nmoesi_mshr32_estatico_conL1']
     
     
     for exp in experimentos_baseline:
