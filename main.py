@@ -110,7 +110,10 @@ def loadworker(bench,archivos, TESTS, directorio_exp):
         if 'ContextsFinished' == simend :
             for archivo in archivos :
                 pprint.pprint(directorio_exp+'/'+bench+'/'+archivo)
-                dict_general[archivo] = pd.read_csv(directorio_exp+'/'+bench+'/'+archivo,sep = ',', header = 0)
+                if archivo == 'extra-report_ipc':
+                    dict_general[archivo] = pd.read_csv(directorio_exp+'/'+bench+'/'+archivo,sep = ' ', header = 0)
+                else:
+                    dict_general[archivo] = pd.read_csv(directorio_exp+'/'+bench+'/'+archivo,sep = ',', header = 0)
 
     except Exception as e:
         print('Fallo al cargar el archivo -> '+directorio_exp+'/'+bench+'/'+archivo)
@@ -373,20 +376,48 @@ def axis_config(axis,title = '', ylabel = '', yticks = [], y_lim = None, xlabel 
     
     if not(legend is None):
         axis.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    else:
+    elif not(axis.legend() is None):
         axis.legend().remove()
     
     axis.set_ylabel(xlabel)
     
-def plot_distribucion_lat(axis,datos,datos2,index, legend_label=''):
+def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
     
-    aux.
+    #aux = pd.DataFrame().join(pd.DataFrame(datos,columns=[test]), how = 'outer')
+    #aux
     
-    memEventsLoad = pd.DataFrame().join(pd.DataFrame(datos,columns=[test]), how = 'outer')
-    memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
-    memEventsLoad.ix[exp] = pd.DataFrame(df_aux[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_aux['access_load'].sum(0),columns=[exp]).transpose().ix[exp]
+    memEventsLoad = pd.DataFrame(index=experimentos,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])
+    #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
+    for test in experimentos:
+        datos2 = datos[test][bench]['extra-report_ipc']
+        memEventsLoad.ix[test] = pd.DataFrame(datos2[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ datos2['access_load'].sum(0),columns=[test]).transpose().ix[test]
                 
     memEventsLoad.plot(ax=axis, kind='bar',stacked=True,title='memEventsLoad')
+    
+def plot_distribucion_lat_continua(datos,bench, legend_label=''):
+    
+    #aux = pd.DataFrame().join(pd.DataFrame(datos,columns=[test]), how = 'outer')
+    #aux
+    f_lat, t_lat = plt.subplots(len(experimentos),1)
+    f_lat.set_size_inches(10, 15)
+    f_lat.set_dpi(300)
+    
+    memEventsLoad = pd.DataFrame(index=experimentos,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])
+    #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
+    for test in zip(experimentos,t_lat):
+        ipc = datos[test[0]][bench]['extra-report_ipc'].copy()
+        ipc = ipc.set_index('esim_time')
+        device = datos[test[0]][bench]['device-spatial-report'].copy()
+        device = device.set_index('esim_time')
+        device = device.join(ipc[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].div( ipc.loc[:,'access_load'].values, axis='index'),how = 'outer')
+        
+        device[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']] = device[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].interpolate()
+        #interpolate(metho)='index'  dropduplicated
+        device.set_index(device['cycle'].interpolate().cumsum())[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].plot(ax=test[1],linewidth=0.1,kind='area',stacked=True,title=test[0])
+    
+    f_lat.tight_layout()
+    f_lat.savefig(directorio_salida+bench+'-memoria-continua.pdf',format='pdf',bbox_inches='tight')
+    plt.close(f_lat)
 
     
 def ajustar_resolucion(df):
@@ -488,26 +519,22 @@ if __name__ == '__main__':
     experimentos = ['10-19_nmoesi_mshr16_lat100_estatico_conL1','10-19_nmoesi_mshr32_lat100_estatico_conL1','10-19_nmoesi_mshr128_lat100_estatico_conL1']
     
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
+
+
     
-    f, t = plt.subplots(4,1)
-    f.set_size_inches(10, 15)
-    f.set_dpi(300)
+    #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
-    f2, t2 = plt.subplots(4,1)
-    f2.set_size_inches(10, 15)
-    f2.set_dpi(300)
-    
-    legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
+    legend = ['estatico_mshr16', 'estatico_mashr32','estatico_mshr128']
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-08/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-20_distribucion_latencia/'
     dir_experimentos = []
     
     for exp in experimentos:
         dir_experimentos.append(directorio_resultados+'/'+exp)
         
-    datos = cargar_datos_sequencial(dir_experimentos,["extra-report_ipc","device-spatial-report","extra-report_ipc"])
+    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
         
     df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
     
@@ -515,7 +542,7 @@ if __name__ == '__main__':
     
     #experimentos_baseline = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1']
     
-    #experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
+    experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
     
     #experimentos_baseline = ['10-13_nmoesi_mshr32_estatico_conL1']
     
@@ -543,7 +570,11 @@ if __name__ == '__main__':
         f2.set_size_inches(10, 15)
         f2.set_dpi(300)
         
-        for test in sorted_nicely(datos.keys()): 
+        f3, t3 = plt.subplots()
+        f3.set_size_inches(10, 15)
+        f3.set_dpi(300)
+        
+        for test in experimentos:#sorted_nicely(datos.keys()): 
         #,sorted_nicely(prestaciones_estatico.keys())):
             
             '''try:
@@ -555,13 +586,13 @@ if __name__ == '__main__':
             try:
                 plot_opc(t[0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING1: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
                 plot_mshr_size(t[1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
+                print('WARNING2: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
                 
             '''try:
                 plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
@@ -578,50 +609,58 @@ if __name__ == '__main__':
             try:
                 plot_opc_accu(t[2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING3: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
                 plot_write_envuelo(t2[0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING4: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
             
             try:
                 plot_latencia_write(t2[1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING5: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
                 plot_load_envuelo(t2[2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING6: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
             
             try:
                 plot_latencia_load(t2[3],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING7: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
             
             try:
                 plot_retries(t2[4],t2[5],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING8: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
                 plot_opc_accu(t2[6],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING9: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
             try:
                 plot_wavefronts(t2[7],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING10: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
             
             try:
                 plot_wavefronts_waiting(t2[8],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING11: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
-
+        try:
+            plot_distribucion_lat(t3,datos,index_x,bench, 'tunk')
+        except KeyError as e:
+            print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')  
+            
+        try:   
+             plot_distribucion_lat_continua(datos,bench, legend_label='')
+        except KeyError as e:
+            print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
                 
         for test in sorted_nicely(prestaciones_estatico.keys()): 
@@ -629,9 +668,9 @@ if __name__ == '__main__':
                 plot_opc_accu(t[3],prestaciones_estatico[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING12: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
               
-        try:
+        '''try:
             #plot_prediccion_opc(t[0],df_prediccion['10-05_nmoesi_mshr32_predicion_opc_20000_conL1'][bench]['device-spatial-report'],index=index_x)
             plot_train_points(t[1],datos[experimentos[0]][bench]['device-spatial-report'], index=index_x, legend_label=test)
             plot_train_points(t[0],datos[experimentos[0]][bench]['device-spatial-report'], index=index_x, legend_label=test)
@@ -640,8 +679,8 @@ if __name__ == '__main__':
             #plot_lim_accu(t[2], prestaciones_estatico,bench,index=index_x,legend_label=test)
             #axis_config(t[2], title = 'training points')
         except KeyError as e:
-            print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
-            
+            print('WARNING13: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+        '''
             
         if not os.path.exists(directorio_salida):
             os.mkdir(directorio_salida)
@@ -684,6 +723,10 @@ if __name__ == '__main__':
         f.savefig(directorio_salida+bench+'-ZOOM.pdf',format='pdf',bbox_inches='tight')
         plt.close(f)
         
+        axis_config(t3,title = 'latencias',ylabel='ciclos',legend = legend)
+        f3.tight_layout()
+        f3.savefig(directorio_salida+bench+'-memoria.pdf',format='pdf',bbox_inches='tight')
+        plt.close(f3)
         '''for l in t:
             #for axis in l:
             l.cla()
