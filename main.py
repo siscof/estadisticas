@@ -417,6 +417,14 @@ def plot_distribucion_lat_continua(datos,bench, legend_label=''):
     
     f_lat.tight_layout()
     f_lat.savefig(directorio_salida+bench+'-memoria-continua.pdf',format='pdf',bbox_inches='tight')
+    
+    t_lat[0].set_xlim([1000000,2000000])
+    t_lat[1].set_xlim([1000000,2000000])
+    t_lat[2].set_xlim([1000000,2000000])
+    
+    f_lat.savefig(directorio_salida+bench+'-memoria-continua-zoom.pdf',format='pdf',bbox_inches='tight')
+    
+    
     plt.close(f_lat)
 
     
