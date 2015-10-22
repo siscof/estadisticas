@@ -386,11 +386,16 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
     #aux = pd.DataFrame().join(pd.DataFrame(datos,columns=[test]), how = 'outer')
     #aux
     
-    memEventsLoad = pd.DataFrame(index=experimentos,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])
+    memEventsLoad = pd.DataFrame(index=experimentos,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','wavedfront_sync_load'])
     #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
     for test in experimentos:
-        datos2 = datos[test][bench]['extra-report_ipc']
+        datos2 = datos[test][bench]['extra-report_ipc'].copy()
+        datos3 = datos[test][bench]['device-spatial-report']
+        #datos2['sg_sync_load'] = (datos3['load_lat']/datos3['load_end']) - (datos2[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/datos2['access_load'].sum(0))
+        
         memEventsLoad.ix[test] = pd.DataFrame(datos2[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ datos2['access_load'].sum(0),columns=[test]).transpose().ix[test]
+        
+        memEventsLoad.ix[test]['wavedfront_sync_load'] = datos3['load_lat']/datos3['load_end'] - memEventsLoad.ix[test].sum(1)
                 
     memEventsLoad.plot(ax=axis, kind='bar',stacked=True,title='memEventsLoad')
     
