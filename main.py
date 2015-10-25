@@ -407,18 +407,18 @@ def plot_distribucion_lat_continua(datos,bench, legend_label=''):
     f_lat.set_size_inches(10, 15)
     f_lat.set_dpi(300)
     
-    memEventsLoad = pd.DataFrame(index=experimentos,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])
+    memEventsLoad = pd.DataFrame(index=experimentos,columns=['queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss'])
     #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
     for test in zip(experimentos,t_lat):
         ipc = datos[test[0]][bench]['extra-report_ipc'].copy()
         ipc = ipc.set_index('esim_time')
         device = datos[test[0]][bench]['device-spatial-report'].copy()
         device = device.set_index('esim_time')
-        device = device.join(ipc[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].div( ipc.loc[:,'access_load'].values, axis='index'),how = 'outer')
+        device = device.join(ipc[['queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss']].div( ipc.loc[:,'access_load_miss'].values, axis='index'),how = 'outer')
         
-        device[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']] = device[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].interpolate()
+        device[['queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss']] = device[['queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss']].interpolate()
         #interpolate(metho)='index'  dropduplicated
-        device.set_index(device['cycle'].interpolate().cumsum())[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].plot(ax=test[1],linewidth=0.1,kind='area',stacked=True,title=test[0])
+        device.set_index(device['cycle'].interpolate().cumsum())[['queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss']].plot(ax=test[1],linewidth=0.1,kind='area',stacked=True,title=test[0])
     
     f_lat.tight_layout()
     f_lat.savefig(directorio_salida+bench+'-memoria-continua.pdf',format='pdf',bbox_inches='tight')
@@ -531,6 +531,9 @@ if __name__ == '__main__':
     
     experimentos = ['10-19_nmoesi_mshr16_lat100_estatico_conL1','10-19_nmoesi_mshr32_lat100_estatico_conL1','10-19_nmoesi_mshr128_lat100_estatico_conL1']
     
+    experimentos = ['10-23_nmoesi_mshr16_test_conL1','10-23_nmoesi_mshr32_test_conL1','10-23_nmoesi_mshr128_test_conL1']
+    
+    
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
 
 
@@ -549,21 +552,20 @@ if __name__ == '__main__':
         
     datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
         
-    df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
+    #df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
     
     dir_estaticos = []
     
     #experimentos_baseline = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1']
     
-    experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
-    
+    '''experimentos_baseline = ['10-01_nmoesi_mshr32_lat300estatico_conL1']
     #experimentos_baseline = ['10-13_nmoesi_mshr32_estatico_conL1']
     
     
     for exp in experimentos_baseline:
         dir_estaticos.append(directorio_resultados+'/'+exp)  
     
-    
+    '''
     
     prestaciones_estatico = cargar_datos_sequencial(dir_estaticos, ["device-spatial-report"])
     
