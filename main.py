@@ -410,17 +410,22 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
         df_critical_miss.columns = col
         df_critical_hit.columns = col
         
-        df_sum = df_miss + df_hit + df_critical_miss + df_critical_hit        
+        df_sum = df_critical_miss + df_critical_hit        
         
-        hitratio.ix[test]['hit ratio'] = (df_critical_hit['access_load'] + df_hit['access_load']).sum()/ df_sum['access_load'].sum()
+        hitratio.ix[test]['hit ratio'] = df_critical_hit['access_load'].sum() / df_sum['access_load'].sum()
         
-        df_sum = df_critical_miss + df_critical_hit
-        memEventsLoad.ix[test] = pd.DataFrame([df_sum[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_sum['access_load'].sum(0)],columns=[test]).transpose().ix[test]
+        #df_sum = df_critical_miss + df_critical_hit
+        #memEventsLoad.ix[test] = pd.DataFrame([df_sum[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_sum['access_load'].sum(0)],index=[test]).ix[test]
         
-        miss_lat = ((df_miss+df_critical_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/(df_miss+df_critical_miss)['access_load'].sum())* (1-hitratio.ix[test]['hit ratio'])
-        hit_lat = ((df_hit+df_critical_hit)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/(df_hit+df_critical_hit)['access_load'].sum())* (hitratio.ix[test]['hit ratio'])
+        memEventsLoad.ix[test] = pd.DataFrame([df_critical_miss[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_critical_miss['access_load'].sum(0)],index=[test]).ix[test]
+        
+        memEventsLoad.ix[test+'-ponderada'] = pd.DataFrame([(df_critical_miss[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_critical_miss['access_load'].sum(0))* (1-hitratio.ix[test]['hit ratio'])],index=[test+'-ponderada'],columns=['miss_lat']).ix[test+'-ponderada']
+        
+        '''
+        miss_lat = ((df_critical_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/(df_miss+df_critical_miss)['access_load'].sum())* (1-hitratio.ix[test]['hit ratio'])
+        hit_lat = ((df_critical_hit)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/(df_hit+df_critical_hit)['access_load'].sum())* (hitratio.ix[test]['hit ratio'])
         memEventsLoad.ix[test+'-ponderada'] = pd.DataFrame([(miss_lat,hit_lat)],index=[test+'-ponderada'],columns=['miss_lat','hit_lat']).ix[test+'-ponderada']
-        
+        '''
         
         
         #memEventsLoad.ix[test]['wavedfront_sync_load'] = memEventsLoad[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(1)[test] -  df_sum[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum().sum() / df_sum['access_load'].sum()
@@ -608,7 +613,7 @@ if __name__ == '__main__':
     
     experimentos = ['10-19_nmoesi_mshr16_lat100_estatico_conL1','10-19_nmoesi_mshr32_lat100_estatico_conL1','10-19_nmoesi_mshr128_lat100_estatico_conL1']
     
-    experimentos = ['10-27_nmoesi_mshr16_estatico_conL1','10-27_nmoesi_mshr32_estatico_conL1','10-27_nmoesi_mshr128_estatico_conL1']
+    experimentos = ['10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
     
     
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
@@ -621,7 +626,7 @@ if __name__ == '__main__':
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-26_distribucion_latencia/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-29_distribucion_latencia/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
