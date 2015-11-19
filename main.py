@@ -368,12 +368,12 @@ def plot_opc_barras(axis,datos,file_input, benchmarks,index, legend_label=''):
             try:
                 opc[test][bench] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
             except KeyError as e:
-                print('tunk')
+                print('tunk1')
          
         try:
             opc.ix[bench] = opc.ix[bench] / opc[0][bench]
         except KeyError as e:
-                print('tunk')
+                print('tunk2')
         
 
     opc.plot(ax=axis,kind='bar')
@@ -414,7 +414,7 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
     memEventsLoad = pd.DataFrame(index=df_index,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','miss_lat','hit_lat','wait_for_mem_latency'])
     hitratio = pd.DataFrame(index=experimentos,columns=['hit ratio'])
     #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
-    for test in experimentos:
+    for test in datos.keys():
         datos2 = datos[test][bench]['extra-report_ipc'].copy()
         datos3 = datos[test][bench]['device-spatial-report'].copy()
         #datos2['sg_sync_load'] = (datos3['load_lat']/datos3['load_end']) - (datos2[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/datos2['access_load'].sum(0))
@@ -438,15 +438,18 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
         #df_sum = df_critical_miss + df_critical_hit
         #memEventsLoad.ix[test] = pd.DataFrame([df_sum[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_sum['access_load'].sum(0)],index=[test]).ix[test]
         
-        memEventsLoad.ix[test] = pd.DataFrame([df_critical_miss[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_critical_miss['access_load'].sum(0)],index=[test]).ix[test]
+        memEventsLoad.ix[test] = pd.DataFrame([(df_critical_miss + df_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ (df_critical_miss + df_miss)['access_load'].sum(0)],index=[test]).ix[test]
         
-        memEventsLoad.ix[test+'-ponderada'] = pd.DataFrame([(df_critical_miss[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_critical_miss['access_load'].sum(0))* (1-hitratio.ix[test]['hit ratio'])],index=[test+'-ponderada'],columns=['miss_lat']).ix[test+'-ponderada']
+        thit = df_critical_hit[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_critical_miss['access_load'].sum(0)
+        tmiss = df_critical_miss[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_critical_miss['access_load'].sum(0)
+        memEventsLoad.ix[test+'-ponderada'] = pd.DataFrame([(tmiss * (1-hitratio.ix[test]['hit ratio']),thit * hitratio.ix[test]['hit ratio']) ],index=[test+'-ponderada'],columns=['miss_lat','hit_lat']).ix[test+'-ponderada']
         
-        memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([datos3['wait_for_mem_time'].sum(0)/ datos3['wait_for_mem_counter'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
+#        memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([datos3['wait_for_mem_time'].sum(0)/ datos3['wait_for_mem_counter'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
+        memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([(df_critical_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ (df_critical_miss)['access_load'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
         
         labels.append('')
         labels.append('')
-        labels.append(str(int(datos3['wait_for_mem_time'].sum(0)/ datos3['wait_for_mem_counter'].sum(0))))
+        #labels.append(str(int(datos3['wait_for_mem_time'].sum(0)/ datos3['wait_for_mem_counter'].sum(0))))
         
         '''
         miss_lat = ((df_critical_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/(df_miss+df_critical_miss)['access_load'].sum())* (1-hitratio.ix[test]['hit ratio'])
@@ -647,19 +650,23 @@ if __name__ == '__main__':
     experimentos = ['10-19_nmoesi_mshr16_lat100_estatico_conL1','10-19_nmoesi_mshr32_lat100_estatico_conL1','10-19_nmoesi_mshr128_lat100_estatico_conL1']
     
     experimentos = ['10-30_nmoesi_mshr16_estatico_conL1','10-30_nmoesi_mshr32_estatico_conL1','10-30_nmoesi_mshr128_estatico_conL1']
-    
+    #experimentos = ['10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
+    experimentos = ['11-05_nmoesi_mshr16_test3_conL1','11-05_nmoesi_mshr32_test3_conL1','11-05_nmoesi_mshr128_test3_conL1','11-05_nmoesi_mshr16_test2_conL1','11-05_nmoesi_mshr32_test2_conL1','11-05_nmoesi_mshr128_test2_conL1','11-05_nmoesi_mshr16_test_conL1','11-05_nmoesi_mshr32_test_conL1','11-05_nmoesi_mshr128_test_conL1']
     
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
+    #experimentos = ['11-06_nmoesi_mshr16_test7_conL1','11-06_nmoesi_mshr32_test7_conL1','11-06_nmoesi_mshr128_test7_conL1','10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
+   
 
+    experimentos = ['11-18_nmoesi_mshr16_avoid_estatico_conL1','11-18_nmoesi_mshr32_avoid_estatico_conL1','11-18_nmoesi_mshr128_avoid_estatico_conL1','11-18_nmoesi_mshr16_avoid_y_dinamico_conL1','11-18_nmoesi_mshr32_avoid_y_dinamico_conL1','11-18_nmoesi_mshr128_avoid_y_dinamico_conL1']
 
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
-    legend = ['estatico_mshr16', 'estatico_mashr32','estatico_mshr128']
+    legend = ['estatico_mshr16', 'estatico_mashr32','estatico_mshr128','dinamico_mshr16', 'dinamico_mashr32','dinamico_mshr128']
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/10-29_distribucion_latencia/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/11-02/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
@@ -794,12 +801,12 @@ if __name__ == '__main__':
         try:
             plot_distribucion_lat(t3,datos,index_x,bench, 'tunk')
         except KeyError as e:
-            print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')  
+            print('WARNING12: KeyError in datos['+test+']['+bench+'][device-spatial-report]')  
             
         try:   
              plot_distribucion_lat_continua(datos,bench, legend_label='')
         except KeyError as e:
-            print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+            print('WARNING13: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
                 
         for test in sorted_nicely(prestaciones_estatico.keys()): 
@@ -807,7 +814,7 @@ if __name__ == '__main__':
                 plot_opc_accu(t[3],prestaciones_estatico[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 
             except KeyError as e:
-                print('WARNING12: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING14: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
               
         '''try:
             #plot_prediccion_opc(t[0],df_prediccion['10-05_nmoesi_mshr32_predicion_opc_20000_conL1'][bench]['device-spatial-report'],index=index_x)
@@ -851,11 +858,12 @@ if __name__ == '__main__':
         plt.close(f2)
         
         #zoom
-        if bench == BENCHMARKS[1]:
+        '''if bench == BENCHMARKS[1]:
             axis_config(t[0],title = 'OPC',x_lim = [0,2000000])
             axis_config(t[1], title='mshr size',y_lim = [0,256],x_lim = [0,2000000])
             axis_config(t[2], title = 'opc acumulado',x_lim = [0,2000000])
             axis_config(t[3], title = 'opc acumulado estaticos',x_lim = [0,2000000])
+        '''
         f.tight_layout()
         f.savefig(directorio_salida+bench+'-ZOOM.pdf',format='pdf',bbox_inches='tight')
         plt.close(f)
