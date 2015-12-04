@@ -371,7 +371,7 @@ def plot_opc_barras(axis,datos,file_input, benchmarks,index, legend_label=''):
                 print('tunk1')
          
         try:
-            opc.ix[bench] = opc.ix[bench] / opc[0][bench]
+            opc.ix[bench] = opc.ix[bench] / opc[sorted_nicely(datos.keys())[0]][bench]
         except KeyError as e:
                 print('tunk2')
         
@@ -656,13 +656,12 @@ if __name__ == '__main__':
     #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
     #experimentos = ['11-06_nmoesi_mshr16_test7_conL1','11-06_nmoesi_mshr32_test7_conL1','11-06_nmoesi_mshr128_test7_conL1','10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
    
-
-    experimentos = ['11-18_nmoesi_mshr16_avoid_estatico_conL1','11-18_nmoesi_mshr32_avoid_estatico_conL1','11-18_nmoesi_mshr128_avoid_estatico_conL1','11-18_nmoesi_mshr16_avoid_y_dinamico_conL1','11-18_nmoesi_mshr32_avoid_y_dinamico_conL1','11-18_nmoesi_mshr128_avoid_y_dinamico_conL1']
+    experimentos = ['11-26_nmoesi_mshr16_avoid_estaticos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr16_avoid_dinamicos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_dinamicos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_dinamicos_noMSHRL2_conL1']
 
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
-    legend = ['estatico_mshr16', 'estatico_mashr32','estatico_mshr128','dinamico_mshr16', 'dinamico_mashr32','dinamico_mshr128']
+    legend = ['estatico_mshr16', 'estatico_mshr32','estatico_mshr128','dinamico_mshr16', 'dinamico_mshr32','dinamico_mshr128']
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
@@ -729,12 +728,12 @@ if __name__ == '__main__':
             except KeyError as e:
                 print('WARNING1: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
-            '''try:
-                plot_mshr_size(t[1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+            try:
+                plot_mshr_size(t[3],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 
             except KeyError as e:
                 print('WARNING2: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
-                
+            '''    
             try:
                 plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 axis_config(t[1][1], title = 'latencia de memoria')
@@ -829,10 +828,10 @@ if __name__ == '__main__':
         '''
             
         axis_config(t[0],title = 'OPC')
-        #axis_config(t[1], title='mshr size',y_lim = [0,256])
+        axis_config(t[3], title='mshr size',y_lim = [0,256])
         axis_config(t[1], title='wait_for_mem')
         axis_config(t[2], title = 'opc acumulado')
-        axis_config(t[3], title = 'opc acumulado estaticos')
+        #axis_config(t[3], title = 'opc acumulado estaticos')
             
         #plot_lim_accu(t[1],prestaciones_estatico,bench, index_x)
         f.suptitle(bench, fontsize=25)
@@ -882,7 +881,7 @@ if __name__ == '__main__':
     f, t = plt.subplots() 
     datos.update(prestaciones_estatico)       
     plot_opc_barras(t,datos,'device-spatial-report', BENCHMARKS,index_x, legend_label='')
-    axis_config(t, title='speedup',y_lim = [0.6,1.6])
+    axis_config(t, title='speedup',y_lim = [0.5,1.5])
     t.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     f.savefig(directorio_salida+'opc.pdf',format='pdf',bbox_inches='tight')
     
