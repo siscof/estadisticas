@@ -609,7 +609,7 @@ if __name__ == '__main__':
     
     #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
 
-    BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','MatrixMultiplication','MersenneTwister','QuasiRandomSequence','SimpleConvolution','SobelFilter']
+    BENCHMARKS = ['BlackScholes','FastWalshTransform','MatrixMultiplication','MersenneTwister','QuasiRandomSequence','SimpleConvolution','SobelFilter']
     test = "tunk"
     bench = 'tunk'
     
@@ -657,6 +657,8 @@ if __name__ == '__main__':
     #experimentos = ['11-06_nmoesi_mshr16_test7_conL1','11-06_nmoesi_mshr32_test7_conL1','11-06_nmoesi_mshr128_test7_conL1','10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
    
     experimentos = ['11-26_nmoesi_mshr16_avoid_estaticos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr16_avoid_dinamicos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_dinamicos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_dinamicos_noMSHRL2_conL1']
+    
+    experimentos = ['11-05_nmoesi_mshr16_test3_conL1','11-05_nmoesi_mshr32_test3_conL1','11-05_nmoesi_mshr128_test3_conL1','12-04_nmoesi_mshr16_estaticos_conL1','12-04_nmoesi_mshr32_estaticos_conL1','12-04_nmoesi_mshr128_estaticos_conL1']
 
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
@@ -665,7 +667,7 @@ if __name__ == '__main__':
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/11-02/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-04/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
