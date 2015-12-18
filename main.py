@@ -414,7 +414,7 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
     memEventsLoad = pd.DataFrame(index=df_index,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','miss_lat','hit_lat','wait_for_mem_latency'])
     hitratio = pd.DataFrame(index=experimentos,columns=['hit ratio'])
     #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
-    for test in datos.keys():
+    for test in sorted_nicely(datos.keys()):
         datos2 = datos[test][bench]['extra-report_ipc'].copy()
         datos3 = datos[test][bench]['device-spatial-report'].copy()
         #datos2['sg_sync_load'] = (datos3['load_lat']/datos3['load_end']) - (datos2[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/datos2['access_load'].sum(0))
@@ -433,7 +433,7 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
         
         df_sum = df_critical_miss + df_critical_hit        
         
-        hitratio.ix[test]['hit ratio'] = df_critical_hit['access_load'].sum() / df_sum['access_load'].sum()
+        hitratio.loc[test,'hit ratio'] = df_critical_hit['access_load'].sum() / df_sum['access_load'].sum()
         
         #df_sum = df_critical_miss + df_critical_hit
         #memEventsLoad.ix[test] = pd.DataFrame([df_sum[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_sum['access_load'].sum(0)],index=[test]).ix[test]
@@ -609,7 +609,7 @@ if __name__ == '__main__':
     
     #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
 
-    BENCHMARKS = ['BlackScholes','FastWalshTransform','MatrixMultiplication','MersenneTwister','QuasiRandomSequence','SimpleConvolution','SobelFilter']
+    BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','MatrixMultiplication','MersenneTwister','QuasiRandomSequence','SimpleConvolution','SobelFilter']
     test = "tunk"
     bench = 'tunk'
     
@@ -659,15 +659,21 @@ if __name__ == '__main__':
     experimentos = ['11-26_nmoesi_mshr16_avoid_estaticos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr16_avoid_dinamicos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_dinamicos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_dinamicos_noMSHRL2_conL1']
     
     experimentos = ['11-05_nmoesi_mshr16_test3_conL1','11-05_nmoesi_mshr32_test3_conL1','11-05_nmoesi_mshr128_test3_conL1','12-04_nmoesi_mshr16_estaticos_conL1','12-04_nmoesi_mshr32_estaticos_conL1','12-04_nmoesi_mshr128_estaticos_conL1']
+    
+    experimentos = ['10-30_nmoesi_mshr16_estatico_conL1','10-30_nmoesi_mshr32_estatico_conL1','10-30_nmoesi_mshr128_estatico_conL1','12-11_nmoesi_mshr16_estaticos_conL1','12-11_nmoesi_mshr32_estaticos_conL1','12-11_nmoesi_mshr128_estaticos_conL1']
+    
+    experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
+    
+    #experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
 
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
-    legend = ['estatico_mshr16', 'estatico_mshr32','estatico_mshr128','dinamico_mshr16', 'dinamico_mshr32','dinamico_mshr128']
+    legend = ['estatico_mshr16', 'estatico_mshr32','estatico_mshr128','estatico_L2MSHR_mshr16', 'estatico_L2MSHR_mshr32','estatico_L2MSHR_mshr128']
     
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-04/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-17/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
@@ -856,6 +862,8 @@ if __name__ == '__main__':
         f2.suptitle(bench, fontsize=25)
         f2.tight_layout()
         f2.savefig(directorio_salida+bench+'_latencias.pdf',format='pdf',bbox_inches='tight')
+        for l in t2.ravel():
+            l.cla()
         plt.close(f2)
         
         #zoom
@@ -867,26 +875,26 @@ if __name__ == '__main__':
         '''
         f.tight_layout()
         f.savefig(directorio_salida+bench+'-ZOOM.pdf',format='pdf',bbox_inches='tight')
+        for l in t.ravel():
+            l.cla()
         plt.close(f)
         
         #axis_config(t3[0],title = 'latencias',ylabel='ciclos')
         f3.tight_layout()
         f3.savefig(directorio_salida+bench+'-memoria.pdf',format='pdf',bbox_inches='tight')
+        for l in t3.ravel():
+            l.cla()
         plt.close(f3)
-        
-        for l in t.ravel():
-            l.cla()
-            
-        for l in t2.ravel():
-            l.cla()
         
     f, t = plt.subplots() 
     datos.update(prestaciones_estatico)       
     plot_opc_barras(t,datos,'device-spatial-report', BENCHMARKS,index_x, legend_label='')
-    axis_config(t, title='speedup',y_lim = [0.5,1.5])
-    t.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    axis_config(t, title='speedup',y_lim = [0.5,6])
+    #t.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    t.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     f.savefig(directorio_salida+'opc.pdf',format='pdf',bbox_inches='tight')
-    
+    t.cla()
+    plt.close(f)
     #generar_hoja_calculo(datos)
     
     
