@@ -665,15 +665,19 @@ if __name__ == '__main__':
     experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
     
     #experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
+    
+    experimentos = ['12-21_nmoesi_mshr16_rand_avoid1_conL1','12-21_nmoesi_mshr32_rand_avoid1_conL1','12-21_nmoesi_mshr128_rand_avoid1_conL1','12-21_nmoesi_mshr16_random3_conL1','12-21_nmoesi_mshr32_random1_conL1','12-21_nmoesi_mshr128_random3_conL1']
 
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
     legend = ['estatico_mshr16', 'estatico_mshr32','estatico_mshr128','estatico_L2MSHR_mshr16', 'estatico_L2MSHR_mshr32','estatico_L2MSHR_mshr128']
     
+    legend = ['mshr16','mshr32','mshr128']
+    
     index_x = 'cycle' #'total_i'
     directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-17/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-22b/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
