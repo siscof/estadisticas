@@ -8,11 +8,13 @@ import matplotlib.pylab as plt
 import matplotlib as mpl
 import numpy as np
 import os
+import sys
 import pprint
 import gc
 import re
 import seaborn as sb
 from itertools import cycle, islice
+
 
 def sorted_nicely( l ):
     """ Sorts the given iterable in the way that is expected.
@@ -573,22 +575,32 @@ def comprobar_estructura_datos(datos):
     else:
         return True
         
-def generar_hoja_calculo(datos):
+def generar_hoja_calculo(datos,output_dir,file_input):
     
-    df = pd.DataFrame()
+    
+    i_exp = []
+    i_ben = []
+    for experimentos in sorted_nicely(datos.keys()):
+        for bench in sorted_nicely(datos[experimentos].keys()):
+            i_exp.append(experimentos)
+            i_ben.append(bench)
+            
+    
+    df = pd.DataFrame(index=[i_exp,i_ben],columns=['OPC'])
     
     for bench in sorted_nicely(BENCHMARKS):
         for test in sorted_nicely(datos.keys()):
          
             try:    
             #df = df.append(pd.DataFrame([(test),(bench),(datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
-                df = df.append(pd.DataFrame([(test , bench,datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
+                #df = df.append(pd.DataFrame([(test , bench,datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
+                df.loc[(test,bench),'OPC'] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
             except KeyError as e:
-                print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                print('WARNING generar_hoja_calculo : KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 
-    df.set_index(['benchmark','test'],inplace=True)
+    #df.set_index(['benchmark','test'],inplace=True)
 
-    df.to_excel('/nfs/gap/fracanma/benchmark/resultados/09-13/tunk.xlsx',engine='xlsxwriter')
+    df.to_excel(output_dir+'/resumen.xlsx',engine='xlsxwriter')
     
     return
             
@@ -667,7 +679,6 @@ if __name__ == '__main__':
     #experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
     
     experimentos = ['12-21_nmoesi_mshr16_rand_avoid1_conL1','12-21_nmoesi_mshr32_rand_avoid1_conL1','12-21_nmoesi_mshr128_rand_avoid1_conL1','12-21_nmoesi_mshr16_random3_conL1','12-21_nmoesi_mshr32_random1_conL1','12-21_nmoesi_mshr128_random3_conL1']
-
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -676,8 +687,11 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados'
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-22b/'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/12-22_test'
+    
+    experimentos = os.listdir(directorio_resultados)
+    
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-23/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
@@ -709,6 +723,9 @@ if __name__ == '__main__':
     comprobar_estructura_datos(datos)
     
     #ajustar_resolucion(datos)
+    generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
+    
+    sys.exit(0)
 
     for bench in sorted_nicely(BENCHMARKS):
         test = 0
