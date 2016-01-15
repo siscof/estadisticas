@@ -605,7 +605,16 @@ def generar_hoja_calculo(datos,output_dir,file_input):
     return
             
     
+def grafico_latencia_finalizacion_wg(axis, datos,output_dir):
+   
+    try:
+        #df = datos.set_index("esim_time")
+        (datos['op_counter']/datos['interval_cycles']).plot(ax=axis,title='wg OPC')
     
+    except KeyError as e:
+        print('grafico_latencia_finalizacion_wg() ERROR')
+
+    return
             
 
 if __name__ == '__main__':
@@ -616,69 +625,15 @@ if __name__ == '__main__':
     
     mpl.rcParams['lines.linewidth'] = 2
     
-    
-    #BENCHMARKS = ['DwtHaar1D']
-    
     #BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
 
-    BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','MatrixMultiplication','MersenneTwister','QuasiRandomSequence','SimpleConvolution','SobelFilter']
+    BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MersenneTwister']
     test = "tunk"
     bench = 'tunk'
     
-    '''dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr16_mshr_dinamico_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr32_mshr_dinamico_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-13_nmoesi_mshr256_mshr_dinamico_conL1/","/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
-    '''
-    '''dir_experimentos = ["/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr32_tunk_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr16_tunk_conL1/",
-    "/nfs/gap/fracanma/benchmark/resultados/09-09_nmoesi_mshr256_tunk_conL1/"]
-    '''
+    dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    #experimentos = ['09-14_nmoesi_mshr16_mshr_dinamico_conL1','09-14_nmoesi_mshr256_mshr_dinamico_conL1','09-14_nmoesi_mshr32_mshr_dinamico_conL1']
-    
-    #experimentos = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1']
-    
-    #experimentos = ['09-16_nmoesi_mshr16_din_scalar8_conL1','09-16_nmoesi_mshr32_din_scalar8_conL1','09-16_nmoesi_mshr64_din_scalar8_conL1','09-16_nmoesi_mshr128_din_scalar8_conL1','09-16_nmoesi_mshr256_din_scalar8_conL1','09-17_nmoesi_mshr32_B30000_conL1','09-17_nmoesi_mshr32_B_conL1']
-
-    #experimentos = ['09-15_nmoesi_mshr16_estatico_conL1','09-15_nmoesi_mshr32_estatico_conL1','09-15_nmoesi_mshr64_estatico_conL1','09-15_nmoesi_mshr128_estatico_conL1','09-15_nmoesi_mshr256_estatico_conL1']
-    
-    #experimentos = ['09-17_nmoesi_mshr16_A_conL1','09-17_nmoesi_mshr32_B30000_conL1','09-17_nmoesi_mshr64_A_conL1','09-17_nmoesi_mshr128_B_conL1','09-17_nmoesi_mshr256_A_conL1']
-        
-    #experimentos = ['09-16_nmoesi_mshr16_estatico_scalar8_conL1','09-16_nmoesi_mshr32_estatico_scalar8_conL1','09-16_nmoesi_mshr64_estatico_scalar8_conL1','09-16_nmoesi_mshr128_estatico_scalar8_conL1','09-16_nmoesi_mshr256_estatico_scalar8_conL1','09-17_nmoesi_mshr32_B30000_conL1'] 
-    
-    #experimentos = ['09-28_nmoesi_mshr32_b5000_conL1','09-28_nmoesi_mshr32_b10000_conL1','09-28_nmoesi_mshr32_b20000_conL1','09-28_nmoesi_mshr32_b30000_conL1'] 
-    
-    #experimentos = ['09-30_nmoesi_mshr32_5000_conL1','09-30_nmoesi_mshr32_10000_conL1','09-30_nmoesi_mshr32_20000_conL1','09-30_nmoesi_mshr32_30000_conL1']    
-    #experimentos = ['09-30_nmoesi_mshr32_b5000_conL1','09-30_nmoesi_mshr32_b10000_conL1','09-30_nmoesi_mshr32_b20000_conL1']
-    #experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1']
-    #experimentos = ['10-02_nmoesi_mshr32_20000_conL1','10-01_nmoesi_mshr32_lat300estatico_conL1','10-05_nmoesi_mshr32_control_mshr_32_trucado_conL1','10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1']
-    
-    #experimentos = ['10-07_nmoesi_mshr32_dinamico_20000_conL1','10-07_nmoesi_mshr32_estatico_20000_conL1','10-07_nmoesi_mshr32_dinamico_trucado_conL1','10-07_nmoesi_mshr32_retry_conL1']
-    
-    experimentos = ['10-08_nmoesi_mshr32_dinamico20000_conL1','10-08_nmoesi_mshr32_trucado20000_conL1','10-13_nmoesi_mshr32_dinamico_conL1','10-13_nmoesi_mshr32_dinamico_forzado_conL1','10-13_nmoesi_mshr32_estatico_conL1']
-    
-    experimentos = ['10-19_nmoesi_mshr16_lat100_estatico_conL1','10-19_nmoesi_mshr32_lat100_estatico_conL1','10-19_nmoesi_mshr128_lat100_estatico_conL1']
-    
-    experimentos = ['10-30_nmoesi_mshr16_estatico_conL1','10-30_nmoesi_mshr32_estatico_conL1','10-30_nmoesi_mshr128_estatico_conL1']
-    #experimentos = ['10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
-    experimentos = ['11-05_nmoesi_mshr16_test3_conL1','11-05_nmoesi_mshr32_test3_conL1','11-05_nmoesi_mshr128_test3_conL1','11-05_nmoesi_mshr16_test2_conL1','11-05_nmoesi_mshr32_test2_conL1','11-05_nmoesi_mshr128_test2_conL1','11-05_nmoesi_mshr16_test_conL1','11-05_nmoesi_mshr32_test_conL1','11-05_nmoesi_mshr128_test_conL1']
-    
-    #experimentos = ['10-13_nmoesi_mshr8_estatico8_conL1','10-13_nmoesi_mshr32_estatico_conL1']
-    #experimentos = ['11-06_nmoesi_mshr16_test7_conL1','11-06_nmoesi_mshr32_test7_conL1','11-06_nmoesi_mshr128_test7_conL1','10-25_nmoesi_mshr16_estatico_conL1','10-25_nmoesi_mshr32_estatico_conL1','10-25_nmoesi_mshr128_estatico_conL1']
-   
-    experimentos = ['11-26_nmoesi_mshr16_avoid_estaticos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_estaticos_noMSHRL2_conL1','11-26_nmoesi_mshr16_avoid_dinamicos_noMSHRL2_conL1', '11-26_nmoesi_mshr32_avoid_dinamicos_noMSHRL2_conL1','11-26_nmoesi_mshr128_avoid_dinamicos_noMSHRL2_conL1']
-    
-    experimentos = ['11-05_nmoesi_mshr16_test3_conL1','11-05_nmoesi_mshr32_test3_conL1','11-05_nmoesi_mshr128_test3_conL1','12-04_nmoesi_mshr16_estaticos_conL1','12-04_nmoesi_mshr32_estaticos_conL1','12-04_nmoesi_mshr128_estaticos_conL1']
-    
-    experimentos = ['10-30_nmoesi_mshr16_estatico_conL1','10-30_nmoesi_mshr32_estatico_conL1','10-30_nmoesi_mshr128_estatico_conL1','12-11_nmoesi_mshr16_estaticos_conL1','12-11_nmoesi_mshr32_estaticos_conL1','12-11_nmoesi_mshr128_estaticos_conL1']
-    
-    experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
-    
-    #experimentos = ['12-17_nmoesi_mshr16_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid1_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid2_conL1','12-17_nmoesi_mshr16_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr32_esimrandom_sin_avoid3_conL1','12-17_nmoesi_mshr128_esimrandom_sin_avoid3_conL1']
-    
-    experimentos = ['12-21_nmoesi_mshr16_rand_avoid1_conL1','12-21_nmoesi_mshr32_rand_avoid1_conL1','12-21_nmoesi_mshr128_rand_avoid1_conL1','12-21_nmoesi_mshr16_random3_conL1','12-21_nmoesi_mshr32_random1_conL1','12-21_nmoesi_mshr128_random3_conL1']
+    experimentos = '01-11_test'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -687,21 +642,20 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/12-22_test'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/01-11_test'
     
-    experimentos = os.listdir(directorio_resultados)
     
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/12-23/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/01-12/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
     
     dir_experimentos = []
     
-    for exp in experimentos:
+    for exp in os.listdir(dir_resultados+"/"+experimentos):
         dir_experimentos.append(directorio_resultados+'/'+exp)
         
-    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc"])
+    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc","device-spatial-report_wg"])
         
     #df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
     
@@ -718,14 +672,14 @@ if __name__ == '__main__':
     
     '''
     
-    prestaciones_estatico = cargar_datos_sequencial(dir_estaticos, ["device-spatial-report"])
+    prestaciones_estatico = cargar_datos_sequencial(dir_estaticos, ["device-spatial-report","device-spatial-report_wg"])
     
     comprobar_estructura_datos(datos)
     
     #ajustar_resolucion(datos)
     generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
     
-    sys.exit(0)
+    #sys.exit(0)
 
     for bench in sorted_nicely(BENCHMARKS):
         test = 0
@@ -743,14 +697,50 @@ if __name__ == '__main__':
         f3.set_size_inches(10, 15)
         f3.set_dpi(300)
         
-        for test in experimentos:#sorted_nicely(datos.keys()): 
+        f4, t4 = plt.subplots(5)
+        f4.set_size_inches(10, 15)
+        f4.set_dpi(300)
+        
+        for test in sorted_nicely(datos.keys()): 
         #,sorted_nicely(prestaciones_estatico.keys())):
+        
+            try:
+                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle']]).copy()
+                device_spatial_report_wg = device_spatial_report_wg.set_index('esim_time')        
+                device_spatial_report_wg = device_spatial_report_wg.join(datos[test][bench]['device-spatial-report_wg'].set_index('esim_time'),how = 'outer')
+                device_spatial_report_wg = device_spatial_report_wg.join(pd.DataFrame(datos[test][bench]['device-spatial-report'].set_index('esim_time')[['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum(),columns=['op']),how = 'outer')
+                device_spatial_report_wg['cycle'] = device_spatial_report_wg['cycle'].cumsum().interpolate(method='index')
+                device_spatial_report_wg = device_spatial_report_wg.set_index('cycle')
+                
+                grafico_latencia_finalizacion_wg(t4[0],device_spatial_report_wg ,directorio_salida)
+                
+                (device_spatial_report_wg['op']/device_spatial_report_wg.index).plot(ax=t4[1],title='OPC salva')
+                
+                #(device_spatial_report_wg['op']/device_spatial_report_wg['cycle']).plot(ax=t4[1],title='OPC salva')
+            
+                #axis_config(t[3], title = 'opc acumulado estaticos')
+                plot_opc(t4[3],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                
+                plot_wg_unmapped(t4[4],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                
+                
+                #f.suptitle(bench, fontsize=25)
+                f4.tight_layout()
+                f4.savefig(directorio_salida+bench+'_opc_wg.pdf',format='pdf',bbox_inches='tight')
+            except KeyError as e:
+                print('WARNING: KeyError plot_wg_unmapped()')
+            
+            for l in t4.ravel():
+                l.cla()
+            
+        
             
             '''try:
                 plot_wg_active(t[1][2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
                 axis_config(t[1][2],title = 'wg active')
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+            '''
             '''
             try:
                 plot_opc(t[0],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
@@ -762,6 +752,7 @@ if __name__ == '__main__':
                 
             except KeyError as e:
                 print('WARNING2: KeyError in datos['+test+']['+bench+'][device-spatial-report]')   
+            '''
             '''    
             try:
                 plot_latencia_memoria(t[1][1],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
@@ -775,7 +766,7 @@ if __name__ == '__main__':
             except KeyError as e:
                 print('WARNING: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
             ''' 
-            try:
+            '''try:
                 plot_opc_accu(t[2],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
                 print('WARNING3: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
@@ -825,7 +816,9 @@ if __name__ == '__main__':
                 plot_wavefronts_waiting(t2[8],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
             except KeyError as e:
                 print('WARNING11: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
-                
+            '''
+        
+        '''
         try:
             plot_distribucion_lat(t3,datos,index_x,bench, 'tunk')
         except KeyError as e:
@@ -843,7 +836,7 @@ if __name__ == '__main__':
                 
             except KeyError as e:
                 print('WARNING14: KeyError in datos['+test+']['+bench+'][device-spatial-report]')
-              
+        '''
         '''try:
             #plot_prediccion_opc(t[0],df_prediccion['10-05_nmoesi_mshr32_predicion_opc_20000_conL1'][bench]['device-spatial-report'],index=index_x)
             plot_train_points(t[1],datos[experimentos[0]][bench]['device-spatial-report'], index=index_x, legend_label=test)
@@ -906,6 +899,8 @@ if __name__ == '__main__':
         for l in t3.ravel():
             l.cla()
         plt.close(f3)
+
+        plt.close(f4)
         
     f, t = plt.subplots() 
     datos.update(prestaciones_estatico)       
