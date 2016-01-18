@@ -194,8 +194,8 @@ def plot_latencia_memoria(axis,datos,index, legend_label=''):
 def plot_wg_unmapped(axis,datos,index, legend_label=''):
     
     datos2 = datos.set_index(datos[index].cumsum())
-    df_mean = pd.rolling_mean(datos2['unmappedWG'], 20)
-    #df_mean = datos2['unmappedWG']
+    #df_mean = pd.rolling_mean(datos2['unmappedWG'], 20)
+    df_mean = datos2['unmappedWG']
     
     if legend_label != '':
         df_mean.columns = [legend_label]
@@ -705,16 +705,42 @@ if __name__ == '__main__':
         #,sorted_nicely(prestaciones_estatico.keys())):
         
             try:
-                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle']]).copy()
+                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle','unmappedWG']]).copy()
                 device_spatial_report_wg = device_spatial_report_wg.set_index('esim_time')        
-                device_spatial_report_wg = device_spatial_report_wg.join(datos[test][bench]['device-spatial-report_wg'].set_index('esim_time'),how = 'outer')
-                device_spatial_report_wg = device_spatial_report_wg.join(pd.DataFrame(datos[test][bench]['device-spatial-report'].set_index('esim_time')[['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum(),columns=['op']),how = 'outer')
+                tunk = datos[test][bench]['device-spatial-report_wg'].set_index('esim_time')
+                device_spatial_report_wg = device_spatial_report_wg.join(tunk,how ='outer')
                 device_spatial_report_wg['cycle'] = device_spatial_report_wg['cycle'].cumsum().interpolate(method='index')
-                device_spatial_report_wg = device_spatial_report_wg.set_index('cycle')
+                device_spatial_report_wg = device_spatial_report_wg.join(pd.DataFrame(datos[test][bench]['device-spatial-report'].set_index('esim_time')[['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum(),columns=['op']),how = 'outer')
+                device_spatial_report_wg[['op','cycle']] = device_spatial_report_wg[['op','cycle']].interpolate(method='index')
+                device_spatial_report_wg2 = device_spatial_report_wg.set_index('cycle')
                 
-                grafico_latencia_finalizacion_wg(t4[0],device_spatial_report_wg ,directorio_salida)
+                grafico_latencia_finalizacion_wg(t4[0],device_spatial_report_wg2 ,directorio_salida)
                 
-                (device_spatial_report_wg['op']/device_spatial_report_wg.index).plot(ax=t4[1],title='OPC salva')
+                opc_salva = pd.DataFrame(device_spatial_report_wg2[device_spatial_report_wg2.op_counter.notnull()]['op']/device_spatial_report_wg2[device_spatial_report_wg2.op_counter.notnull()].index)
+                opc_salva.plot(ax=t4[1],title='OPC salva')
+                t4[1].set_xlim(left = 0)
+                t4[1].set_ylim(bottom = 0)
+                
+                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle','unmappedWG']]).copy()
+                device_spatial_report_wg = device_spatial_report_wg.set_index('esim_time')        
+                tunk = datos[test][bench]['device-spatial-report_wg'].drop_duplicates(subset=['esim_time']).set_index('esim_time')
+                device_spatial_report_wg = device_spatial_report_wg.join(tunk,how ='outer')
+                device_spatial_report_wg['cycle'] = device_spatial_report_wg['cycle'].cumsum().interpolate(method='index')
+                device_spatial_report_wg = device_spatial_report_wg.join(pd.DataFrame(datos[test][bench]['device-spatial-report'].set_index('esim_time')[['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum(),columns=['op']),how = 'outer').interpolate(method='index')
+                
+                opc_julio = pd.DataFrame([],columns=['cycle','op'])
+                a = 0
+                for i in np.arange(device_spatial_report_wg.index.size - 1):
+            
+                    a = a +1
+                    print(a)
+                    if (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i]] == 0) and (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i+1]] > 0):
+                        opc_julio = opc_julio.append(device_spatial_report_wg.loc[device_spatial_report_wg.index[i]])
+                        
+                opc_julio = opc_julio.set_index('cycle')
+                (opc_julio['op']/opc_julio.index).plot(ax=t4[2],title='OPC julio') 
+                t4[2].set_xlim(left = 0)
+                t4[2].set_ylim(bottom = 0)    
                 
                 #(device_spatial_report_wg['op']/device_spatial_report_wg['cycle']).plot(ax=t4[1],title='OPC salva')
             
