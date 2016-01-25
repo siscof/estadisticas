@@ -609,12 +609,33 @@ def grafico_latencia_finalizacion_wg(axis, datos,output_dir):
    
     try:
         #df = datos.set_index("esim_time")
-        (datos['op_counter']/datos['interval_cycles']).plot(ax=axis,title='wg OPC')
+        (datos['op_counter']/datos['interval_cycles']).plot(ax=axis,title='OPC por WorkGroups')
     
     except KeyError as e:
         print('grafico_latencia_finalizacion_wg() ERROR')
 
     return
+    
+def plot_ipc_wf(datos,output_dir,bench):
+    
+    try:
+        f, t = plt.subplots(4,1)
+        f.set_size_inches(10, 15)
+        f.set_dpi(300)
+    
+        df = datos.set_index(datos['cycle'].cumsum())
+        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[0])
+        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[1])
+        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[2])
+        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[3])
+    
+        f.tight_layout()
+        f.savefig(output_dir+bench+'_wavefront_ipc.pdf',format='pdf',bbox_inches='tight')
+    except Exception as e:
+        pass
+    
+    return
+    
             
 
 if __name__ == '__main__':
@@ -633,7 +654,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos = '01-11_test'
+    experimentos = '01-25_1CU'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -642,10 +663,10 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/01-11_test'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/01-25_1CU'
     
     
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/01-12/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/01-25_graficas_1CU/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
@@ -653,7 +674,8 @@ if __name__ == '__main__':
     dir_experimentos = []
     
     for exp in os.listdir(dir_resultados+"/"+experimentos):
-        dir_experimentos.append(directorio_resultados+'/'+exp)
+        #dir_experimentos.append(directorio_resultados+'/'+exp)
+        dir_experimentos.append(directorio_resultados + '/' + exp)
         
     datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc","device-spatial-report_wg"])
         
@@ -677,7 +699,7 @@ if __name__ == '__main__':
     comprobar_estructura_datos(datos)
     
     #ajustar_resolucion(datos)
-    generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
+    #generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
     
     #sys.exit(0)
 
@@ -705,7 +727,18 @@ if __name__ == '__main__':
         #,sorted_nicely(prestaciones_estatico.keys())):
         
             try:
-                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle','unmappedWG']]).copy()
+                df2 = datos[test][bench]['device-spatial-report'][['cycle','mappedWG','unmappedWG']]
+                df2 = df2.set_index(df2['cycle'].cumsum())
+                df3 = pd.DataFrame((df2['mappedWG'] - df2['unmappedWG']).cumsum(),columns=['wgs'])
+                
+                for i in reversed(df3.index):
+                    if df3['wgs'][i] == df3['wgs'][df3.index[0]]:
+                        start_finish_wg_x = i
+                        break
+                
+                
+                
+                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle','mappedWG','unmappedWG']]).copy()
                 device_spatial_report_wg = device_spatial_report_wg.set_index('esim_time')        
                 tunk = datos[test][bench]['device-spatial-report_wg'].set_index('esim_time')
                 device_spatial_report_wg = device_spatial_report_wg.join(tunk,how ='outer')
@@ -721,43 +754,71 @@ if __name__ == '__main__':
                 t4[1].set_xlim(left = 0)
                 t4[1].set_ylim(bottom = 0)
                 
-                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle','unmappedWG']]).copy()
+                device_spatial_report_wg = pd.DataFrame(datos[test][bench]['device-spatial-report'][['esim_time','cycle','mappedWG','unmappedWG']]).copy()
                 device_spatial_report_wg = device_spatial_report_wg.set_index('esim_time')        
                 tunk = datos[test][bench]['device-spatial-report_wg'].drop_duplicates(subset=['esim_time']).set_index('esim_time')
                 device_spatial_report_wg = device_spatial_report_wg.join(tunk,how ='outer')
                 device_spatial_report_wg['cycle'] = device_spatial_report_wg['cycle'].cumsum().interpolate(method='index')
                 device_spatial_report_wg = device_spatial_report_wg.join(pd.DataFrame(datos[test][bench]['device-spatial-report'].set_index('esim_time')[['simd_op', 'scalar_i','v_mem_op', 's_mem_i','lds_op','branch_i']].sum(1).cumsum(),columns=['op']),how = 'outer').interpolate(method='index')
                 
-                opc_julio = pd.DataFrame([],columns=['cycle','op'])
-                a = 0
+                opc_julio_antes = pd.DataFrame([],columns=['cycle','op'])
+                opc_julio_despues = pd.DataFrame([],columns=['cycle','op'])
                 for i in np.arange(device_spatial_report_wg.index.size - 1):
-            
-                    a = a +1
-                    print(a)
+                
                     if (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i]] == 0) and (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i+1]] > 0):
-                        opc_julio = opc_julio.append(device_spatial_report_wg.loc[device_spatial_report_wg.index[i]])
+                        opc_julio_antes = opc_julio_antes.append(device_spatial_report_wg.loc[device_spatial_report_wg.index[i]])
+                    
+                    if (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i]] > 0) and (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i+1]] == 0):
+                        opc_julio_despues = opc_julio_despues.append(device_spatial_report_wg.loc[device_spatial_report_wg.index[i]])
                         
-                opc_julio = opc_julio.set_index('cycle')
-                (opc_julio['op']/opc_julio.index).plot(ax=t4[2],title='OPC julio') 
+                opc_julio_antes = opc_julio_antes.set_index('cycle')
+                opc_julio_despues = opc_julio_despues.set_index('cycle')
+                opc_julio_antes.columns = ['antes', 'interval_cycles', 'op_counter', 'mappedWG','unmappedWG']
+                (opc_julio_antes['antes']/opc_julio_antes.index).plot(ax=t4[2],title='OPC julio',legend=True) 
+                opc_julio_despues.columns = ['despues', 'interval_cycles', 'op_counter', 'mappedWG','unmappedWG']
+                (opc_julio_despues['despues']/opc_julio_despues.index).plot(ax=t4[2],title='OPC julio',legend=True) 
+                
+           
                 t4[2].set_xlim(left = 0)
-                t4[2].set_ylim(bottom = 0)    
+                t4[2].set_ylim(bottom = 0)     
                 
                 #(device_spatial_report_wg['op']/device_spatial_report_wg['cycle']).plot(ax=t4[1],title='OPC salva')
             
                 #axis_config(t[3], title = 'opc acumulado estaticos')
                 plot_opc(t4[3],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+                t4[3].set_xlim(left = 0)
+                t4[3].set_ylim(bottom = 0)  
                 
                 plot_wg_unmapped(t4[4],datos[test][bench]['device-spatial-report'], index=index_x, legend_label=test)
+              
+                df_wg_vertical = (device_spatial_report_wg['mappedWG'] - device_spatial_report_wg['unmappedWG']).cumsum()
+                #for i in zip(np.arange(df_wg_vertical)):
                 
+                #    if (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i]] == 0) and (device_spatial_report_wg['unmappedWG'][device_spatial_report_wg.index[i+1]] > 0):
+                    
                 
+                t4[0].axvline(x=start_finish_wg_x, linewidth=2, color='r')
+                t4[1].axvline(x=start_finish_wg_x, linewidth=2, color='r')
+                t4[2].axvline(x=start_finish_wg_x, linewidth=2, color='r')
+                t4[3].axvline(x=start_finish_wg_x, linewidth=2, color='r')
+                t4[4].axvline(x=start_finish_wg_x, linewidth=2, color='r')
+                
+                t4[0].set_ylabel("opc")
+                t4[1].set_ylabel("opc")
+                t4[2].set_ylabel("opc")
+                t4[3].set_ylabel("opc")
+                t4[4].set_ylabel("gw finalizados cada 1kciclo")
                 #f.suptitle(bench, fontsize=25)
+                plot_wg_active(t4[4],datos[test][bench]['device-spatial-report'],'cycle')
                 f4.tight_layout()
                 f4.savefig(directorio_salida+bench+'_opc_wg.pdf',format='pdf',bbox_inches='tight')
+                plot_ipc_wf(datos[test][bench]['device-spatial-report'],directorio_salida,bench)
             except KeyError as e:
                 print('WARNING: KeyError plot_wg_unmapped()')
             
             for l in t4.ravel():
                 l.cla()
+                
             
         
             
