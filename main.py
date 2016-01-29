@@ -618,21 +618,41 @@ def grafico_latencia_finalizacion_wg(axis, datos,output_dir):
     
 def plot_ipc_wf(datos,output_dir,bench):
     
+    f, t = plt.subplots(4,1)
+    f.set_size_inches(10, 15)
+    f.set_dpi(300)
     try:
-        f, t = plt.subplots(4,1)
-        f.set_size_inches(10, 15)
-        f.set_dpi(300)
     
         df = datos.set_index(datos['cycle'].cumsum())
-        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[0])
-        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[1])
-        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[2])
-        (df['wfop0'][df['wfop0'] >= 0]/df['wfop0'][df['wfop0'] >= 0].index).plot(ax=t[3])
+        (df['wfop0'][df['wfop0'] >= 0]/df['cycle'][df['wfop0'] >= 0]).plot(ax=t[0])
+        (df['v_mem_op'][df['wfop0'] >= 0]/df['cycle'][df['wfop0'] >= 0]).plot(ax=t[0])
+        (df['load_lat'][df['wfop0'] >= 0]/df['vcache_load_finish'][df['wfop0'] >= 0]).interpolate().plot(ax=t[0],secondary_y=True)
+        
+        (df['wfop1'][df['wfop1'] >= 0]/df['cycle'][df['wfop1'] >= 0]).plot(ax=t[1])
+        (df['v_mem_op'][df['wfop1'] >= 0]/df['cycle'][df['wfop1'] >= 0]).plot(ax=t[1])
+        (df['load_lat'][df['wfop1'] >= 0]/df['vcache_load_finish'][df['wfop1'] >= 0]).interpolate().plot(ax=t[1],secondary_y=True)
+        
+        (df['wfop2'][df['wfop2'] >= 0]/df['cycle'][df['wfop2'] >= 0]).plot(ax=t[2])
+        (df['v_mem_op'][df['wfop2'] >= 0]/df['cycle'][df['wfop2'] >= 0]).plot(ax=t[2])
+        (df['load_lat'][df['wfop2'] >= 0]/df['vcache_load_finish'][df['wfop2'] >= 0]).interpolate().plot(ax=t[2],secondary_y=True)
+        
+        (df['wfop3'][df['wfop3'] >= 0]/df['cycle'][df['wfop3'] >= 0]).plot(ax=t[3])
+        (df['v_mem_op'][df['wfop3'] >= 0]/df['cycle'][df['wfop3'] >= 0]).plot(ax=t[3])
+        (df['load_lat'][df['wfop3'] >= 0]/df['vcache_load_finish'][df['wfop3'] >= 0]).interpolate().plot(ax=t[3],secondary_y=True)
     
+        for l in t.ravel():
+            #l.set_xlim(left = 0)
+            l.set_ylim(bottom = 0)     
+        
         f.tight_layout()
         f.savefig(output_dir+bench+'_wavefront_ipc.pdf',format='pdf',bbox_inches='tight')
     except Exception as e:
         pass
+        
+    for l in t.ravel():
+        l.cla()
+    
+    plt.close(f)
     
     return
     
@@ -654,7 +674,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos = '01-25_1CU'
+    experimentos = '01-29'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -663,10 +683,10 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/01-25_1CU'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/01-29'
     
     
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/01-25_graficas_1CU/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/01-29_graficas/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
