@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+'''#!/usr/bin/python3'''
 
 import time
 import multiprocessing
@@ -191,6 +191,33 @@ def plot_latencia_memoria(axis,datos,index, legend_label=''):
         df_mean.columns = [legend_label]
     
     df_mean.plot(ax=axis)
+    
+def plot_latencia_memoria_VMB(datos,directorio_salida, legend_label=''):
+    
+    f, t = plt.subplots()
+    f.set_size_inches(10, 15)
+    f.set_dpi(300)
+    
+    for bench in sorted_nicely(BENCHMARKS):
+        for test in sorted_nicely(datos.keys()):
+            datos2 = datos['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat'].cumsum()
+            df_result = pd.DataFrame(,index=['VMB','L1-L2','MM'],columns=[test])
+            
+            df_result.ix['VMB'] = datos['uop_load_vmb_lat']/datos2['uop_load_end']
+            df_result.ix['L1-L2'] = (datos2['uop_load_lat']/datos2['uop_load_end']) - df_result.ix['VMB'] - df_result.ix['MM']
+            df_result.ix['MM'] = datos['uop_load_mm_lat']/datos2['uop_load_end']
+            
+            if legend_label != '':
+                df_mean.columns = [legend_label]
+            
+            df_result.plot(ax=t,kind=bar,stacked=True,title='memory latency')
+            
+        
+        f.tight_layout()
+        f.savefig(directorio_salida+bench+'-memory-latency.pdf',format='pdf',bbox_inches='tight')
+        for l in t.ravel():
+            l.cla()
+        
     
 def plot_wg_unmapped(axis,datos,index, legend_label=''):
     
@@ -627,9 +654,9 @@ def grafico_latencia_finalizacion_wg(axis, datos,output_dir):
     
 def plot_ipc_wf(datos,output_dir,bench):
     
-    f, t = plt.subplots(4,1)
-    f.set_size_inches(10, 15)
-    f.set_dpi(300)
+    f6, t = plt.subplots(4,1)
+    f6.set_size_inches(10, 15)
+    f6.set_dpi(300)
     try:
     
         df = datos.set_index(datos['cycle'].cumsum())
@@ -653,15 +680,15 @@ def plot_ipc_wf(datos,output_dir,bench):
             #l.set_xlim(left = 0)
             l.set_ylim(bottom = 0)     
         
-        f.tight_layout()
-        f.savefig(output_dir+bench+'_wavefront_ipc.pdf',format='pdf',bbox_inches='tight')
+        f6.tight_layout()
+        f6.savefig(output_dir+bench+'_wavefront_ipc.pdf',format='pdf',bbox_inches='tight')
     except Exception as e:
         pass
         
     for l in t.ravel():
         l.cla()
     
-    plt.close(f)
+    plt.close(f6)
     
     return
     
@@ -683,7 +710,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos = '02-04_dramsim_simlargas'
+    experimentos = '02-12_mshr_L1-L2'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -692,10 +719,10 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/02-04_dramsim_simlargas/'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/02-12_mshr_L1-L2/'
     
     
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/02-04_dramsim_simlargas_graficas/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/02-12_mshr_L1-L2_graficas/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
@@ -728,10 +755,14 @@ if __name__ == '__main__':
     comprobar_estructura_datos(datos)
     
     #ajustar_resolucion(datos)
-    #generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
+    generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
     
     #sys.exit(0)
-
+    try:
+        plot_latencia_memoria_VMB(datos,directorio_salida, legend_label='')
+    except Exception as e:
+        print('WARNING: KeyError plot_latencia_memoria_VMB()')
+        
     for bench in sorted_nicely(BENCHMARKS):
         test = 0
         
