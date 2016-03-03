@@ -1,4 +1,4 @@
-'''#!/usr/bin/python3'''
+#!/home/sisco/workspace/python-venv/bin/python3
 
 import time
 import multiprocessing
@@ -198,25 +198,47 @@ def plot_latencia_memoria_VMB(datos,directorio_salida, legend_label=''):
     f.set_size_inches(10, 15)
     f.set_dpi(300)
     
+    df_resumen = pd.DataFrame()
+
     for bench in sorted_nicely(BENCHMARKS):
-        for test in sorted_nicely(datos.keys()):
-            datos2 = datos['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat'].cumsum()
-            df_result = pd.DataFrame(,index=['VMB','L1-L2','MM'],columns=[test])
-            
-            df_result.ix['VMB'] = datos['uop_load_vmb_lat']/datos2['uop_load_end']
-            df_result.ix['L1-L2'] = (datos2['uop_load_lat']/datos2['uop_load_end']) - df_result.ix['VMB'] - df_result.ix['MM']
-            df_result.ix['MM'] = datos['uop_load_mm_lat']/datos2['uop_load_end']
-            
-            if legend_label != '':
-                df_mean.columns = [legend_label]
-            
-            df_result.plot(ax=t,kind=bar,stacked=True,title='memory latency')
-            
-        
-        f.tight_layout()
-        f.savefig(directorio_salida+bench+'-memory-latency.pdf',format='pdf',bbox_inches='tight')
-        for l in t.ravel():
-            l.cla()
+        try:
+            for test in sorted_nicely(datos.keys()):
+                try:
+                    #datos2 = datos[test][bench]['device-spatial-report'][['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat','cycle']].cumsum()
+                    datos3 = datos[test][bench]['device-spatial-report'][['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat']].sum()
+                    datos4 = datos[test][bench]['extra-report_ipc'][['Coalesces_gpu','Coalesces_L1']].sum().sum()
+                    datos4 = datos[test][bench]['extra-report_ipc']['accesos_L1'].sum().sum()
+                    #datos2 = datos2.set_index('cycle')
+                    #df_result = pd.DataFrame([],index=datos2.index, columns=['VMB','L1-L2','MM'])
+                
+                    #df_result['VMB'] = datos2['uop_load_vmb_lat']/datos2['uop_load_end']
+                    #df_result['MM'] = datos2['uop_load_mm_lat']/datos2['uop_load_end']
+                    #df_result['L1-L2'] = (datos2['uop_load_lat']/datos2['uop_load_end']) - df_result['VMB'] - df_result['MM']
+                    VMB = 0
+                    MM = 0
+                    L1_L2 = 0
+                    VMB = datos3['uop_load_vmb_lat']/datos3['uop_load_end']
+                    MM = datos3['uop_load_mm_lat']/datos3['uop_load_end']
+                    L1_L2 = (datos3['uop_load_lat']/datos3['uop_load_end']) - VMB - MM
+                    df_resumen = df_resumen.append(pd.DataFrame([[bench,VMB,L1_L2,MM,datos4]],index=[test],columns=['BENCHMARKS','VMB','L1-L2','MM','accesses_L1']))
+                    
+                    #if legend_label != '':
+                    #    df_mean.columns = [legend_label]
+                
+                    #df_result.plot(ax=t,kind='area',stacked=True,title='memory latency')
+                except Exception as e:
+                    pass
+                
+                #f.tight_layout()
+                #if not os.path.exists(directorio_salida+'/'+test):
+                #    os.mkdir(directorio_salida+'/'+test)
+                #f.savefig(directorio_salida+'/'+test+'/'+bench+'-memory-latency.pdf',format='pdf',bbox_inches='tight')
+                #for l in t.ravel():
+                #t.cla()
+        except Exception as e:
+            pass
+    
+    df_resumen.to_excel(directorio_salida+'/resumen_memoria.xlsx',engine='xlsxwriter')
         
     
 def plot_wg_unmapped(axis,datos,index, legend_label=''):
@@ -710,7 +732,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos = '02-12_mshr_L1-L2'
+    experimentos ='02-25_coalesce'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -719,10 +741,10 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/02-12_mshr_L1-L2/'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/02-25_coalesce/'
     
     
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/02-12_mshr_L1-L2_graficas/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/02-25_coalesce_graficas/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
