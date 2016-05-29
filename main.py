@@ -106,13 +106,13 @@ def loadworker(bench,archivos, TESTS, directorio_exp):
 
     #dict_general[archivo] = contenedor()
     try:
-        pprint.pprint(directorio_exp+'/'+bench+'.err')
+        #pprint.pprint(directorio_exp+'/'+bench+'.err')
         f = open(directorio_exp+'/condor_log/'+bench+'.err')
         simend = buscar_string(f, 'SimEnd')
         f.close()
-        if 'ContextsFinished' == simend :
+        if 'ContextsFinished' == simend or 'SouthernIslandsMaxInst' == simend  :
             for archivo in archivos :
-                pprint.pprint(directorio_exp+'/'+bench+'/'+archivo)
+                #pprint.pprint(directorio_exp+'/'+bench+'/'+archivo)
                 if archivo == 'extra-report_ipc':
                     dict_general[archivo] = pd.read_csv(directorio_exp+'/'+bench+'/'+archivo,sep = ' ', header = 0)
                 else:
@@ -198,14 +198,19 @@ def plot_latencia_memoria_VMB(datos,directorio_salida, legend_label=''):
     f.set_size_inches(10, 15)
     f.set_dpi(300)
     
+    f2, t2 = plt.subplots()
+    f2.set_size_inches(10, 15)
+    f2.set_dpi(300)
+    
     df_resumen = pd.DataFrame()
 
     for bench in sorted_nicely(BENCHMARKS):
         try:
+            df_bench = pd.DataFrame()
             for test in sorted_nicely(datos.keys()):
                 try:
-                    #datos2 = datos[test][bench]['device-spatial-report'][['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat','cycle']].cumsum()
-                    datos3 = datos[test][bench]['device-spatial-report'][['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat']].sum()
+                    datos2 = datos[test][bench]['device-spatial-report'][['uop_load_lat','uop_load_end','uop_load_vmb_lat','uop_load_mm_lat','cycle']]
+                    datos3 = datos2.sum()
                     datos4 = datos[test][bench]['extra-report_ipc'][['Coalesces_gpu','Coalesces_L1']].sum().sum()
                     datos4 = datos[test][bench]['extra-report_ipc']['accesos_L1'].sum().sum()
                     #datos2 = datos2.set_index('cycle')
@@ -221,12 +226,14 @@ def plot_latencia_memoria_VMB(datos,directorio_salida, legend_label=''):
                     MM = datos3['uop_load_mm_lat']/datos3['uop_load_end']
                     L1_L2 = (datos3['uop_load_lat']/datos3['uop_load_end']) - VMB - MM
                     df_resumen = df_resumen.append(pd.DataFrame([[bench,VMB,L1_L2,MM,datos4]],index=[test],columns=['BENCHMARKS','VMB','L1-L2','MM','accesses_L1']))
+                    df_bench = df_bench.append(pd.DataFrame([[VMB,L1_L2,MM]],index=[test],columns=['VMB','L1-L2','MM']))
                     
                     #if legend_label != '':
                     #    df_mean.columns = [legend_label]
-                
-                    #df_result.plot(ax=t,kind='area',stacked=True,title='memory latency')
+                    #    datos2 = datos2.set_index(datos2['cycle'].cumsum())
+                    #   (datos2[['uop_load_lat','uop_load_vmb_lat','uop_load_mm_lat']].div(datos2['uop_load_end'], axis='index')).plot(ax=t,kind='area',stacked=True,title='memory latency')
                 except Exception as e:
+                    df_resumen = df_resumen.append(pd.DataFrame([[bench,0,0,0,0]],index=[test],columns=['BENCHMARKS','VMB','L1-L2','MM','accesses_L1']))
                     pass
                 
                 #f.tight_layout()
@@ -235,10 +242,21 @@ def plot_latencia_memoria_VMB(datos,directorio_salida, legend_label=''):
                 #f.savefig(directorio_salida+'/'+test+'/'+bench+'-memory-latency.pdf',format='pdf',bbox_inches='tight')
                 #for l in t.ravel():
                 #t.cla()
+        
+            df_bench.plot(ax=t2,kind='bar',stacked=True,title=bench+' memory latency')
+            f2.tight_layout()
+            dir = directorio_salida+'/bench-memory-latency-stacked'
+            if not os.path.exists(dir):
+                os.mkdir(dir)
+            f2.savefig(dir+'/'+bench+'.pdf',format='pdf',bbox_inches='tight')
+            #for l in t.ravel():
+            t2.cla()
+            plt.close(f2)
         except Exception as e:
             pass
-    
+        
     df_resumen.to_excel(directorio_salida+'/resumen_memoria.xlsx',engine='xlsxwriter')
+    plt.close(f)
         
     
 def plot_wg_unmapped(axis,datos,index, legend_label=''):
@@ -636,15 +654,16 @@ def comprobar_estructura_datos(datos):
 def generar_hoja_calculo(datos,output_dir,file_input):
     
     
-    i_exp = []
-    i_ben = []
-    for experimentos in sorted_nicely(datos.keys()):
-        for bench in sorted_nicely(datos[experimentos].keys()):
-            i_exp.append(experimentos)
-            i_ben.append(bench)
+    #i_exp = []
+    #i_ben = []
+    #for experimentos in sorted_nicely(datos.keys()):
+    #    for bench in sorted_nicely(datos[experimentos].keys()):
+    #        i_exp.append(experimentos)
+    #        i_ben.append(bench)
             
-    
-    df = pd.DataFrame(index=[i_exp,i_ben],columns=['OPC'])
+    opc = 0
+    #df = pd.DataFrame(index=[sorted_nicely(datos.keys()),sorted_nicely(BENCHMARKS)],columns=['OPC'])
+    df = pd.DataFrame()
     
     for bench in sorted_nicely(BENCHMARKS):
         for test in sorted_nicely(datos.keys()):
@@ -652,9 +671,17 @@ def generar_hoja_calculo(datos,output_dir,file_input):
             try:    
             #df = df.append(pd.DataFrame([(test),(bench),(datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
                 #df = df.append(pd.DataFrame([(test , bench,datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
-                df.loc[(test,bench),'OPC'] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
-            except KeyError as e:
-                print('WARNING generar_hoja_calculo : KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                opc = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
+                
+                df = df.append(pd.DataFrame([[bench,opc]],index=[test],columns=['BENCHMARKS','OPC']))
+                print("ok: ")
+                #df.loc[(test,bench),'OPC'] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
+            except Exception as e:
+                #print('WARNING generar_hoja_calculo : KeyError in datos['+test+']['+bench+'][device-spatial-report]')
+                df = df.append(pd.DataFrame([[bench,0]],index=[test],columns=['BENCHMARKS','OPC']))
+                print("error: ")
+                
+            print("bench = "+bench+", test = "+test+" opc = ")
                 
     #df.set_index(['benchmark','test'],inplace=True)
 
@@ -732,7 +759,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos ='02-25_coalesce'
+    experimentos = '05-27_si'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -741,15 +768,17 @@ if __name__ == '__main__':
     legend = ['mshr16','mshr32','mshr128']
     
     index_x = 'cycle' #'total_i'
-    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/02-25_coalesce/'
+    directorio_resultados = '/nfs/gap/fracanma/benchmark/resultados/'+experimentos+'/'
     
-    
-    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/02-25_coalesce_graficas/'
+    directorio_salida = '/nfs/gap/fracanma/benchmark/resultados/'+experimentos+'_graficas/'
     
     if not os.path.exists(directorio_salida):
         os.mkdir(directorio_salida)
     
     dir_experimentos = []
+    
+    print('Empezamos a leer los archivos...')
+    load_data_start = time.time()
     
     for exp in os.listdir(dir_resultados+"/"+experimentos):
         #dir_experimentos.append(directorio_resultados+'/'+exp)
@@ -770,9 +799,11 @@ if __name__ == '__main__':
     for exp in experimentos_baseline:
         dir_estaticos.append(directorio_resultados+'/'+exp)  
     
-    '''
+    '''   
     
     prestaciones_estatico = cargar_datos_sequencial(dir_estaticos, ["device-spatial-report","device-spatial-report_wg"])
+    
+    print('Datos leidos en :',int(time.time() - load_data_start),'segundos')
     
     comprobar_estructura_datos(datos)
     
