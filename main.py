@@ -1,4 +1,9 @@
-#!/home/sisco/workspace/python-venv/bin/python3
+'''
+Created on 16 de jun. de 2016
+
+@author: sisco
+'''
+
 
 import time
 import multiprocessing
@@ -672,16 +677,21 @@ def generar_hoja_calculo(datos,output_dir,file_input):
             #df = df.append(pd.DataFrame([(test),(bench),(datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
                 #df = df.append(pd.DataFrame([(test , bench,datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
                 opc = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
-                
-                df = df.append(pd.DataFrame([[bench,opc]],index=[test],columns=['BENCHMARKS','OPC']))
-                print("ok: ")
+                latencia_gpu = datos[test][bench]['extra-report_ipc']['lat_loads_gpu'].sum(0).sum() / datos[test][bench]['extra-report_ipc']['num_loads_gpu'].sum(0).sum()
+                latencia_mem = datos[test][bench]['extra-report_ipc']['lat_loads_mem'].sum(0).sum() / datos[test][bench]['extra-report_ipc']['num_loads_mem'].sum(0).sum()
+                ht = datos[test][bench]['extra-report_ipc']['hits_L1'].sum(0).sum() / datos[test][bench]['extra-report_ipc']['accesos_L1'].sum(0).sum()
+                accesos = datos[test][bench]['extra-report_ipc']['accesos_L1'].sum(0).sum()
+                mpko = datos[test][bench]['extra-report_ipc']['misses_L1'].sum(0).sum() / datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() 
+                mpki = datos[test][bench]['extra-report_ipc']['misses_L1'].sum(0).sum() / datos[test][bench][file_input]['total_i'].sum(0).sum() 
+                df = df.append(pd.DataFrame([[bench,opc,latencia_gpu,latencia_mem,ht,accesos,mpko,mpki]],index=[test],columns=['BENCHMARKS','OPC','latencia_gpu','latencia_mem','ht','accesos','mpko','mpki']))
+                #print("ok: ")
                 #df.loc[(test,bench),'OPC'] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
             except Exception as e:
                 #print('WARNING generar_hoja_calculo : KeyError in datos['+test+']['+bench+'][device-spatial-report]')
                 df = df.append(pd.DataFrame([[bench,0]],index=[test],columns=['BENCHMARKS','OPC']))
-                print("error: ")
+                #print("error: ")
                 
-            print("bench = "+bench+", test = "+test+" opc = ")
+            #print("bench = "+bench+", test = "+test+" opc = ")
                 
     #df.set_index(['benchmark','test'],inplace=True)
 
@@ -741,10 +751,79 @@ def plot_ipc_wf(datos,output_dir,bench):
     
     return
     
-            
+def graficas_misses_x_stall(datos,output_dir):
 
-if __name__ == '__main__':
+    f, t = plt.subplots(5,4)
+    f.set_size_inches(30, 18)
+    f.set_dpi(300)
     
+    f2, t2 = plt.subplots(5,4)
+    f2.set_size_inches(30, 18)
+    f2.set_dpi(300)
+    
+    f3, t3 = plt.subplots(1)
+    f3.set_size_inches(10, 15)
+    f3.set_dpi(300)
+    
+    index = 0
+    df_wf_opc = pd.DataFrame({})
+    for bench in sorted_nicely(BENCHMARKS):
+        df_dist_misses = pd.DataFrame({})
+        df_dist_missesxwf = pd.DataFrame({})
+        
+        table = t.ravel()[index]  
+        table2 = t2.ravel()[index]  
+        
+        for test in sorted_nicely(datos.keys()):        
+            try:
+                df = datos[test][bench]['wf-spatial-report']
+            
+                df_dist_misses = df_dist_misses.append(pd.DataFrame(df.sum()[['dist_misses_1-5','dist_misses_6-10','dist_misses_11-15','dist_misses_16-20','dist_misses_21']],columns=[test]).T)
+            except Exception as e:
+                df_dist_misses = df_dist_misses.append(pd.DataFrame({},columns=[test]).T)
+                
+            try:
+                df_dist_missesxwf = df_dist_missesxwf.append(pd.DataFrame(df.sum()[['dist_misses_1-5','dist_misses_6-10','dist_misses_11-15','dist_misses_16-20','dist_misses_21']]/len(df.index),columns=[test]).T)
+            except Exception as e:
+                df_dist_missesxwf = df_dist_missesxwf.append(pd.DataFrame({},columns=[test]).T)
+                
+                #df_wf_opc = df_wf_opc.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[test]))
+                #df_dist_misses = df_dist_misses.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[test],columns=['OPC']))
+            try:
+                df_wf_opc = df_wf_opc.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[bench],columns=[test]),how='outer')
+            except Exception as e:
+                pass    
+                
+    
+        df_dist_misses.plot(ax=table,kind='bar',title=bench,legend=True)
+        df_dist_missesxwf.plot(ax=table2,kind='bar',title=bench,legend=True)
+        #df_wf_opc.plot(ax=table,kind='bar',secondary_y='',legend=True)
+        #f.tight_layout()
+        #f.savefig(output_dir+bench+'_misses_x_stall.pdf',format='pdf',bbox_inches='tight')
+        
+        #df_wf_opc = df_wf_opc.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[test]))
+        
+    
+        #for l in t.ravel():
+        #   l.cla()
+        
+        index = index + 1
+        
+    df_wf_opc.plot(ax=t3,kind='bar',title=bench,legend=True)
+        
+    f.tight_layout()
+    f.savefig(output_dir+'_misses_x_stall.pdf',format='pdf',bbox_inches='tight')
+    
+    f2.tight_layout()
+    f2.savefig(output_dir+'_misses_x_stallxwf.pdf',format='pdf',bbox_inches='tight')
+    
+    f3.tight_layout()
+    f3.savefig(output_dir+'_opc4.pdf',format='pdf',bbox_inches='tight')
+    return 
+    
+ 
+if __name__ == '__main__':
+   
     sb.set_style("whitegrid")
     cmap = sb.color_palette("Set2", 15)
     sb.set_palette(cmap, n_colors=15)
@@ -759,7 +838,10 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos = '05-27_si'
+    #experimentos = '05-31_si'
+    #experimentos = '06-02_si_antiguo'
+    experimentos = '06-15_simd_vmb1024_bigwfqueue'
+    experimentos = '06-16'
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -780,11 +862,14 @@ if __name__ == '__main__':
     print('Empezamos a leer los archivos...')
     load_data_start = time.time()
     
-    for exp in os.listdir(dir_resultados+"/"+experimentos):
+    for exp in os.listdir(directorio_resultados):
         #dir_experimentos.append(directorio_resultados+'/'+exp)
-        dir_experimentos.append(directorio_resultados + '/' + exp)
+        print(exp)
+        if(os.path.isdir(directorio_resultados + exp)):
+            print("ok")
+            dir_experimentos.append(directorio_resultados + exp)
         
-    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc","device-spatial-report_wg"])
+    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc","wf-spatial-report"])
         
     #df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
     
@@ -809,7 +894,9 @@ if __name__ == '__main__':
     
     #ajustar_resolucion(datos)
     generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
-    
+   
+    graficas_misses_x_stall(datos,directorio_salida)
+
     #sys.exit(0)
     try:
         plot_latencia_memoria_VMB(datos,directorio_salida, legend_label='')
@@ -1138,7 +1225,5 @@ if __name__ == '__main__':
     plt.close(f)
     #generar_hoja_calculo(datos)
     
-    
-    
-    
+    exit()
     
