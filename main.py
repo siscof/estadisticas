@@ -757,6 +757,12 @@ def graficas_misses_x_stall(datos,output_dir):
     f.set_size_inches(30, 18)
     f.set_dpi(300)
     
+    f_stall, t_stall= [{},{}]
+    for test in sorted_nicely(datos.keys()):
+        f_stall[test], t_stall[test] = plt.subplots(5,4)
+        f_stall[test].set_size_inches(30, 18)
+        f_stall[test].set_dpi(300)
+    
     f2, t2 = plt.subplots(5,4)
     f2.set_size_inches(30, 18)
     f2.set_dpi(300)
@@ -770,12 +776,26 @@ def graficas_misses_x_stall(datos,output_dir):
     for bench in sorted_nicely(BENCHMARKS):
         df_dist_misses = pd.DataFrame({})
         df_dist_missesxwf = pd.DataFrame({})
+        dict_wf_opc = {}
+        #df_stall = pd.DataFrame({})
         
-        table = t.ravel()[index]  
-        table2 = t2.ravel()[index]  
+        #table = t.ravel()[index]  
+        #table_stall = t_stall.ravel()[index]  
+        #table2 = t2.ravel()[index]  
+        
+        #table = t.ravel()[index]  
+        #table_stall = t_stall[test].ravel()[index]  
+        #table2 = t2.ravel()[index]
         
         for test in sorted_nicely(datos.keys()):        
             try:
+                
+                df_stall = pd.DataFrame({})
+        
+                table = t.ravel()[index]  
+                table_stall = t_stall[test].ravel()[index]  
+                table2 = t2.ravel()[index]
+                
                 df = datos[test][bench]['wf-spatial-report']
             
                 df_dist_misses = df_dist_misses.append(pd.DataFrame(df.sum()[['dist_misses_1-5','dist_misses_6-10','dist_misses_11-15','dist_misses_16-20','dist_misses_21']],columns=[test]).T)
@@ -789,14 +809,34 @@ def graficas_misses_x_stall(datos,output_dir):
                 
                 #df_wf_opc = df_wf_opc.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[test]))
                 #df_dist_misses = df_dist_misses.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[test],columns=['OPC']))
+        
+            
+            
             try:
-                df_wf_opc = df_wf_opc.join(pd.DataFrame([df.sum()['opc']/df.sum()['exec_cycles']],index=[bench],columns=[test]),how='outer')
+                dict_wf_opc[test] = (df.sum()['opc']/df.sum()['exec_cycles'])
+                df2 = pd.DataFrame(datos[test][bench]['stall'])
+                #df2.index = pd.to_timedelta(datos[test][bench]['stall'][' cycle'], unit='ns')
+                df_stall = clasificar_stall(pd.DataFrame(df2))
+                df_stall.index = pd.to_timedelta(datos[test][bench]['stall'][' cycle'], unit='ns')
+                df_stall2 = df_stall.resample(str(int((df_stall.index[-1].delta - df_stall.index[0].delta) / 100000)) + 'us').sum()
+                df_stall2.index = np.arange(0,len(df_stall2.index))
+                df_stall2.plot(ax=table_stall,title=bench,legend=True)
+                #f_stall.tight_layout()
+                f_stall[test].savefig(output_dir+'stalls_'+test+'.pdf',format='pdf',bbox_inches='tight')
             except Exception as e:
-                pass    
+                pass
+            
+        try:
+            #df_wf_opc = df_wf_opc.join(pd.DataFrame([(df.sum()['opc']/df.sum()['exec_cycles'])/len(df.index)],index=[bench],columns=[test]),how='outer')
+            df_wf_opc = pd.concat([df_wf_opc, pd.DataFrame(dict_wf_opc,index=[bench])])
+        except Exception as e:
+            pass    
                 
+        
     
         df_dist_misses.plot(ax=table,kind='bar',title=bench,legend=True)
         df_dist_missesxwf.plot(ax=table2,kind='bar',title=bench,legend=True)
+        
         #df_wf_opc.plot(ax=table,kind='bar',secondary_y='',legend=True)
         #f.tight_layout()
         #f.savefig(output_dir+bench+'_misses_x_stall.pdf',format='pdf',bbox_inches='tight')
@@ -808,8 +848,10 @@ def graficas_misses_x_stall(datos,output_dir):
         #   l.cla()
         
         index = index + 1
-        
-    df_wf_opc.plot(ax=t3,kind='bar',title=bench,legend=True)
+     
+    #df_wf_opc.columns = ['1-simd','2-simd','4-simd'] 
+    #t3.legend(legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    df_wf_opc.plot(ax=t3,kind='bar',title='OPC',legend=True)
         
     f.tight_layout()
     f.savefig(output_dir+'_misses_x_stall.pdf',format='pdf',bbox_inches='tight')
@@ -818,8 +860,33 @@ def graficas_misses_x_stall(datos,output_dir):
     f2.savefig(output_dir+'_misses_x_stallxwf.pdf',format='pdf',bbox_inches='tight')
     
     f3.tight_layout()
-    f3.savefig(output_dir+'_opc4.pdf',format='pdf',bbox_inches='tight')
+    f3.savefig(output_dir+'wf_opc.pdf',format='pdf',bbox_inches='tight')
+    
+    #f_stall.tight_layout()
+    #f_stall.savefig(output_dir+'stalls.pdf',format='pdf',bbox_inches='tight')
     return 
+    
+def clasificar_stall(df):
+    
+    df_r = pd.DataFrame()
+    
+    for i in np.arange(0,31):
+        df_r[i] = df[' stalls'] == i 
+    
+    df_r[31] = df[' stalls'] >=31  
+    
+    df_r = df_r.astype('int')
+
+    df_r = pd.DataFrame({'01-05' : df_r[np.arange(1,6)].sum(1), '06-10' : df_r[np.arange(6,11)].sum(1)
+    , '11-15' : df_r[np.arange(11,16)].sum(1), '16-20' : df_r[np.arange(16,21)].sum(1)
+    , '21-25' : df_r[np.arange(21,26)].sum(1), '26-30' : df_r[np.arange(26,31)].sum(1)
+    #, '31-35' : df_r[np.arange(31,36)].sum(1), '36-40' : df_r[np.arange(26,31)].sum(1)
+    #, '41-45' : df_r[np.arange(41,46)].sum(1), '46-50' : df_r[np.arange(26,31)].sum(1)
+    #, '51-55' : df_r[np.arange(51,56)].sum(1), '56-60' : df_r[np.arange(26,31)].sum(1)
+    , '31+' : df_r[31]})
+    
+    return df_r
+    
     
  
 if __name__ == '__main__':
@@ -831,6 +898,9 @@ if __name__ == '__main__':
     mpl.rcParams['lines.linewidth'] = 2
     
     BENCHMARKS = ['BinarySearch','BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
+    #BENCHMARKS = ['BinomialOption','BlackScholes','DCT','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MatrixTranspose','MersenneTwister','QuasiRandomSequence','RadixSort','RecursiveGaussian','Reduction','ScanLargeArrays','SimpleConvolution','SobelFilter']
+
+
 
     #BENCHMARKS = ['BlackScholes','DwtHaar1D','FastWalshTransform','FloydWarshall','MatrixMultiplication','MersenneTwister']
     test = "tunk"
@@ -840,8 +910,14 @@ if __name__ == '__main__':
     
     #experimentos = '05-31_si'
     #experimentos = '06-02_si_antiguo'
-    experimentos = '06-15_simd_vmb1024_bigwfqueue'
-    experimentos = '06-16'
+    #experimentos = '06-15_simd_vmb1024_bigwfqueue'
+    #experimentos = '06-20_stalls'
+    #experimentos = '06-27_salva_3'
+    #experimentos = '06-26_exp_salva2'
+    #experimentos = '06-29_test'
+    #experimentos = '06-30_salva_avoid'
+    experimentos = '08-10_test'
+    #experimentos = "test"
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
     
@@ -869,7 +945,7 @@ if __name__ == '__main__':
             print("ok")
             dir_experimentos.append(directorio_resultados + exp)
         
-    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc","wf-spatial-report"])
+    datos = cargar_datos_sequencial(dir_experimentos,["device-spatial-report","extra-report_ipc","wf-spatial-report","stall"])
         
     #df_prediccion = cargar_datos_sequencial([directorio_resultados+'/10-05_nmoesi_mshr32_predicion_opc_20000_conL1'],["device-spatial-report","extra-report_ipc"])   
     
@@ -895,7 +971,7 @@ if __name__ == '__main__':
     #ajustar_resolucion(datos)
     generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
    
-    graficas_misses_x_stall(datos,directorio_salida)
+    #graficas_misses_x_stall(datos,directorio_salida)
 
     #sys.exit(0)
     try:
