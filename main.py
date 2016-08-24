@@ -491,7 +491,7 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
         df_index.append(i+'-wait_for_mem') 
     
     #memEventsLoad = pd.DataFrame(index=df_index,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','miss_lat','hit_lat','wait_for_mem_latency'])
-    memEventsLoad = pd.DataFrame(index=df_index,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','wait_for_mem_latency'])
+    memEventsLoad = pd.DataFrame(index=df_index,columns=['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','wait_for_mem_latency'])
     hitratio = pd.DataFrame(index=df_index,columns=['hit ratio'])
     #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
     for test in sorted_nicely(datos.keys()):
@@ -501,12 +501,12 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
             #datos2['sg_sync_load'] = (datos3['load_lat']/datos3['load_end']) - (datos2[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/datos2['access_load'].sum(0))
             
             
-            df_miss = datos2[['queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss','access_load_miss']]
-            df_hit = datos2[['queue_load_hit','lock_mshr_load_hit','lock_dir_load_hit','eviction_load_hit','retry_load_hit','miss_load_hit','finish_load_hit','access_load_hit']]
-            df_critical_miss = datos2[['queue_load_critical_miss','lock_mshr_load_critical_miss','lock_dir_load_critical_miss','eviction_load_critical_miss','retry_load_critical_miss','miss_load_critical_miss','finish_load_critical_miss','access_load_critical_miss']]
-            df_critical_hit = datos2[['queue_load_critical_hit','lock_mshr_load_critical_hit','lock_dir_load_critical_hit','eviction_load_critical_hit','retry_load_critical_hit','miss_load_critical_hit','finish_load_critical_hit','access_load_critical_hit']]
+            df_miss = datos2[['wavefront_access_load_miss','queue_load_miss','lock_mshr_load_miss','lock_dir_load_miss','eviction_load_miss','retry_load_miss','miss_load_miss','finish_load_miss','access_load_miss']]
+            df_hit = datos2[['wavefront_access_load_hit','queue_load_hit','lock_mshr_load_hit','lock_dir_load_hit','eviction_load_hit','retry_load_hit','miss_load_hit','finish_load_hit','access_load_hit']]
+            df_critical_miss = datos2[['wavefront_access_load_critical_miss','queue_load_critical_miss','lock_mshr_load_critical_miss','lock_dir_load_critical_miss','eviction_load_critical_miss','retry_load_critical_miss','miss_load_critical_miss','finish_load_critical_miss','access_load_critical_miss']]
+            df_critical_hit = datos2[['wavefront_access_load_critical_hit','queue_load_critical_hit','lock_mshr_load_critical_hit','lock_dir_load_critical_hit','eviction_load_critical_hit','retry_load_critical_hit','miss_load_critical_hit','finish_load_critical_hit','access_load_critical_hit']]
             
-            col = ['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','access_load']
+            col = ['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','access_load']
             df_miss.columns = col
             df_hit.columns = col
             df_critical_miss.columns = col
@@ -516,17 +516,17 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
             
             hitratio.loc[test,'hit ratio'] = df_critical_hit['access_load'].sum() / df_sum['access_load'].sum()
             
-            #df_sum = df_critical_miss + df_critical_hit
-            #memEventsLoad.ix[test] = pd.DataFrame([df_sum[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_sum['access_load'].sum(0)],index=[test]).ix[test]
             
-            memEventsLoad.ix[test] = pd.DataFrame([(df_critical_miss + df_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ (df_critical_miss + df_miss)['access_load'].sum(0)],index=[test]).ix[test]
+            memEventsLoad.ix[test] = pd.DataFrame([(df_critical_miss + df_miss)[['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ (df_critical_miss + df_miss)['access_load'].sum(0)],index=[test]).ix[test]
+            
+            #memEventsLoad.ix[test] = pd.DataFrame([df_critical_miss[['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ df_critical_miss['access_load'].sum(0)],index=[test]).ix[test]
             
             thit = df_critical_hit[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_critical_miss['access_load'].sum(0)
             tmiss = df_critical_miss[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ df_critical_miss['access_load'].sum(0)
             #memEventsLoad.ix[test+'-ponderada'] = pd.DataFrame([(tmiss * (1-hitratio.ix[test]['hit ratio']),thit * hitratio.ix[test]['hit ratio']) ],index=[test+'-ponderada'],columns=['miss_lat','hit_lat']).ix[test+'-ponderada']
             
     #        memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([datos3['wait_for_mem_time'].sum(0)/ datos3['wait_for_mem_counter'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
-            memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([(df_critical_miss)[['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ (df_critical_miss)['access_load'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
+            memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([(df_critical_miss)[['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ (df_critical_miss)['access_load'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
             
             labels.append('')
             labels.append('')
@@ -908,15 +908,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    #experimentos = '05-31_si'
-    #experimentos = '06-02_si_antiguo'
-    #experimentos = '06-15_simd_vmb1024_bigwfqueue'
-    #experimentos = '06-20_stalls'
-    #experimentos = '06-27_salva_3'
-    #experimentos = '06-26_exp_salva2'
-    #experimentos = '06-29_test'
-    #experimentos = '06-30_salva_avoid'
-    experimentos = '08-10_test'
+    experimentos = '08-23_test2'
     #experimentos = "test"
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
