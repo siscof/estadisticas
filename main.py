@@ -1,9 +1,4 @@
-'''
-Created on 16 de jun. de 2016
-
-@author: sisco
-'''
-
+#! /home/sisco/workspace/python-venv/bin/python3.4
 
 import time
 import multiprocessing
@@ -488,11 +483,11 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
     for i in sorted_nicely(datos.keys()): 
         df_index.append(i) 
         #df_index.append(i+'-ponderada') 
-        df_index.append(i+'-wait_for_mem') 
+        #df_index.append(i+'-wait_for_mem') 
     
     #memEventsLoad = pd.DataFrame(index=df_index,columns=['queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','miss_lat','hit_lat','wait_for_mem_latency'])
-    memEventsLoad = pd.DataFrame(index=df_index,columns=['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load','wait_for_mem_latency'])
-    hitratio = pd.DataFrame(index=df_index,columns=['hit ratio'])
+    memEventsLoad = pd.DataFrame(index=df_index,columns=['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load'])
+    #hitratio = pd.DataFrame(index=df_index,columns=['hit ratio'])
     #memEventsLoad.join(pd.DataFrame(datos2,columns=[test]), how = 'outer')
     for test in sorted_nicely(datos.keys()):
         try:
@@ -514,7 +509,7 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
             
             df_sum = df_critical_miss + df_critical_hit        
             
-            hitratio.loc[test,'hit ratio'] = df_critical_hit['access_load'].sum() / df_sum['access_load'].sum()
+            #hitratio.loc[test,'hit ratio'] = df_critical_hit['access_load'].sum() / df_sum['access_load'].sum()
             
             
             memEventsLoad.ix[test] = pd.DataFrame([(df_critical_miss + df_miss)[['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0)/ (df_critical_miss + df_miss)['access_load'].sum(0)],index=[test]).ix[test]
@@ -526,7 +521,7 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
             #memEventsLoad.ix[test+'-ponderada'] = pd.DataFrame([(tmiss * (1-hitratio.ix[test]['hit ratio']),thit * hitratio.ix[test]['hit ratio']) ],index=[test+'-ponderada'],columns=['miss_lat','hit_lat']).ix[test+'-ponderada']
             
     #        memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([datos3['wait_for_mem_time'].sum(0)/ datos3['wait_for_mem_counter'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
-            memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([(df_critical_miss)[['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ (df_critical_miss)['access_load'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
+            #memEventsLoad.ix[test+'-wait_for_mem'] = pd.DataFrame([(df_critical_miss)[['wavefront_access_load','queue_load','lock_mshr_load','lock_dir_load','eviction_load','retry_load','miss_load','finish_load']].sum(0).sum(0)/ (df_critical_miss)['access_load'].sum(0)],index=[test+'-wait_for_mem'],columns=['wait_for_mem_latency']).ix[test+'-wait_for_mem']
             
             labels.append('')
             labels.append('')
@@ -552,9 +547,9 @@ def plot_distribucion_lat(axis,datos,index,bench, legend_label=''):
     
     axis_config(axis[0],title = 'latencias',ylabel='ciclos',legend = memEventsLoad.columns)
     
-    hitratio.plot(ax=axis[1], kind='bar',stacked=True,title='Hit Ratio')
+    #hitratio.plot(ax=axis[1], kind='bar',stacked=True,title='Hit Ratio')
     
-    axis_config(axis[1],title = 'hit ratio',y_lim=[0,1])
+    #axis_config(axis[1],title = 'hit ratio',y_lim=[0,1])
     
     
     
@@ -677,13 +672,26 @@ def generar_hoja_calculo(datos,output_dir,file_input):
             #df = df.append(pd.DataFrame([(test),(bench),(datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
                 #df = df.append(pd.DataFrame([(test , bench,datos[test][bench]['device-spatial-report']['cycle'].sum())],columns=['test','benchmark','cycles']))
                 opc = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
+                tiempo_espera_wavefront = datos[test][bench]['extra-report_ipc'][['wavefront_access_load_hit','wavefront_access_load_miss','wavefront_access_load_critical_hit','wavefront_access_load_critical_miss']].sum(0).sum() / datos[test][bench]['extra-report_ipc'][['access_load_hit','access_load_miss','access_load_critical_hit','access_load_critical_miss']].sum(0).sum()
                 latencia_gpu = datos[test][bench]['extra-report_ipc']['lat_loads_gpu'].sum(0).sum() / datos[test][bench]['extra-report_ipc']['num_loads_gpu'].sum(0).sum()
                 latencia_mem = datos[test][bench]['extra-report_ipc']['lat_loads_mem'].sum(0).sum() / datos[test][bench]['extra-report_ipc']['num_loads_mem'].sum(0).sum()
                 ht = datos[test][bench]['extra-report_ipc']['hits_L1'].sum(0).sum() / datos[test][bench]['extra-report_ipc']['accesos_L1'].sum(0).sum()
                 accesos = datos[test][bench]['extra-report_ipc']['accesos_L1'].sum(0).sum()
                 mpko = datos[test][bench]['extra-report_ipc']['misses_L1'].sum(0).sum() / datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() 
                 mpki = datos[test][bench]['extra-report_ipc']['misses_L1'].sum(0).sum() / datos[test][bench][file_input]['total_i'].sum(0).sum() 
-                df = df.append(pd.DataFrame([[bench,opc,latencia_gpu,latencia_mem,ht,accesos,mpko,mpki]],index=[test],columns=['BENCHMARKS','OPC','latencia_gpu','latencia_mem','ht','accesos','mpko','mpki']))
+                df = df.append(pd.DataFrame([[bench,opc,tiempo_espera_wavefront,latencia_gpu,latencia_mem,ht,accesos,mpko,mpki]],index=[test],columns=['BENCHMARKS','OPC','tiempo_espera_wavefront','latencia_gpu','latencia_mem','ht','accesos','mpko','mpki']))
+                relativoHitL1 = 
+                relativoHitL2 =
+                relativoHitMainMemory =
+                AbsInstMemV = 
+                relativoInstMemV = 
+                AbsAccessos = datos[test][bench]['device-spatial-report']['mem_acc_end'].sum()
+                AbsLecturas = datos[test][bench]['device-spatial-report']['load_end'].sum()
+                AbsEscrituras = datos[test][bench]['device-spatial-report']['write_end'].sum()
+                LecturasRelativas = AbsLecturas/AbsAccessos
+                EscrituraRelativas = AbsEscrituras/AbsAccessos
+                CantidadLecturasPorEscritura = AbsLecturas/AbsEscrituras
+                
                 #print("ok: ")
                 #df.loc[(test,bench),'OPC'] = datos[test][bench][file_input][['scalar_i','simd_op','s_mem_i','v_mem_op','lds_op']].sum(0).sum() / float(datos[test][bench][file_input]['cycle'].sum())
             except Exception as e:
@@ -854,10 +862,10 @@ def graficas_misses_x_stall(datos,output_dir):
     df_wf_opc.plot(ax=t3,kind='bar',title='OPC',legend=True)
         
     f.tight_layout()
-    f.savefig(output_dir+'_misses_x_stall.pdf',format='pdf',bbox_inches='tight')
+    #f.savefig(output_dir+'_misses_x_stall.pdf',format='pdf',bbox_inches='tight')
     
     f2.tight_layout()
-    f2.savefig(output_dir+'_misses_x_stallxwf.pdf',format='pdf',bbox_inches='tight')
+    #f2.savefig(output_dir+'_misses_x_stallxwf.pdf',format='pdf',bbox_inches='tight')
     
     f3.tight_layout()
     f3.savefig(output_dir+'wf_opc.pdf',format='pdf',bbox_inches='tight')
@@ -908,7 +916,7 @@ if __name__ == '__main__':
     
     dir_resultados = "/nfs/gap/fracanma/benchmark/resultados"
     
-    experimentos = '08-23_test2'
+    experimentos = '10-21_alltogether2'
     #experimentos = "test"
     
     #legend = ['dinamico_anterior','trucado_anterior','dinamico_nuevo','trucado_nuevo','estatico']
@@ -962,6 +970,7 @@ if __name__ == '__main__':
     
     #ajustar_resolucion(datos)
     generar_hoja_calculo(datos,directorio_salida,'device-spatial-report')
+
    
     #graficas_misses_x_stall(datos,directorio_salida)
 
